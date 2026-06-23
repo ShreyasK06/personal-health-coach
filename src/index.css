@@ -1,4 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
-:root { color-scheme: dark; }
-body { background: #0b0d10; color: #e8eaed; }
+:root {
+  color-scheme: dark;
+  --bg: #0b0d10;
+  --card: #14171c;
+  --border: #23262d;
+  --text: #e8eaed;
+  --muted: #8b8f98;
+  --red: #ff3b3b;
+  --amber: #ffb020;
+  --green: #16c47a;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+}
+
+* {
+  scrollbar-color: var(--border) transparent;
+}
