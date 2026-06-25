@@ -7,6 +7,7 @@ interface RecoveryRingProps {
   score: number
   band: 'red' | 'amber' | 'green'
   size?: number
+  onClick?: () => void
 }
 
 const BAND_COLOR: Record<RecoveryRingProps['band'], string> = {
@@ -21,7 +22,7 @@ const BAND_STATE: Record<RecoveryRingProps['band'], string> = {
   green: 'PRIMED',
 }
 
-export function RecoveryRing({ score, band, size = 232 }: RecoveryRingProps) {
+export function RecoveryRing({ score, band, size = 232, onClick }: RecoveryRingProps) {
   const clamped = Math.max(0, Math.min(100, score))
   const color = BAND_COLOR[band]
   const stroke = 14
@@ -34,9 +35,39 @@ export function RecoveryRing({ score, band, size = 232 }: RecoveryRingProps) {
   const angle = -Math.PI / 2 + frac * 2 * Math.PI
   const dotX = cx + r * Math.cos(angle)
   const dotY = cx + r * Math.sin(angle)
+  const interactive = onClick != null
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
 
   return (
-    <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative flex items-center justify-center rounded-full transition-opacity"
+      style={{ width: size, height: size, cursor: interactive ? 'pointer' : undefined }}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      onMouseEnter={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.opacity = '0.92'
+            }
+          : undefined
+      }
+      onMouseLeave={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.opacity = '1'
+            }
+          : undefined
+      }
+    >
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <defs>
           <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%">

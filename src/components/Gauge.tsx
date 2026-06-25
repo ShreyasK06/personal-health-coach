@@ -12,6 +12,7 @@ interface GaugeProps {
   caption?: string // small state word, e.g. "Optimal"
   size?: number
   thickness?: number
+  onClick?: () => void
 }
 
 export function Gauge({
@@ -23,7 +24,17 @@ export function Gauge({
   caption,
   size = 260,
   thickness = 16,
+  onClick,
 }: GaugeProps) {
+  const interactive = onClick != null
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
   const frac = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0
   const r = (size - thickness) / 2
   const cx = size / 2
@@ -41,7 +52,28 @@ export function Gauge({
     `M ${from.x.toFixed(2)} ${from.y.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${to.x.toFixed(2)} ${to.y.toFixed(2)}`
 
   return (
-    <div className="flex flex-col items-center" style={{ width: size }}>
+    <div
+      className="flex flex-col items-center rounded-[18px] transition-opacity"
+      style={{ width: size, cursor: interactive ? 'pointer' : undefined }}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      onMouseEnter={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.opacity = '0.92'
+            }
+          : undefined
+      }
+      onMouseLeave={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.opacity = '1'
+            }
+          : undefined
+      }
+    >
       <svg width={size} height={height} viewBox={`0 0 ${size} ${height}`}>
         <defs>
           <filter id="gaugeGlow" x="-30%" y="-30%" width="160%" height="160%">
