@@ -1,28 +1,83 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
+/* Inter is loaded via <link> in index.html (Tailwind v4's @layer expansion
+   would otherwise put rules before a CSS @import here, which is invalid). */
 
 :root {
   color-scheme: dark;
-  --bg: #0b0d10;
-  --card: #14171c;
-  --border: #23262d;
-  --text: #e8eaed;
-  --muted: #8b8f98;
-  --red: #ff3b3b;
-  --amber: #ffb020;
-  --green: #16c47a;
+
+  /* Titanium dark palette (Noop / WHOOP-style) */
+  --bg: #0F1318;            /* near-black cool charcoal canvas */
+  --surface: #181D24;       /* raised card fill */
+  --surface-2: #20262E;     /* inset / hover / segmented track */
+  --border: #262E39;        /* subtle 1px hairline */
+  --border-strong: #313B49;
+  --text: #F4F6F8;          /* primary */
+  --text-dim: #C7CFD9;      /* secondary */
+  --text-mut: #8A94A4;      /* tertiary / labels */
+  --gold: #E8B84B;          /* accent: labels, the + button, brand */
+  --gold-deep: #C8902F;
+  --rec-low: #E0463C;       /* recovery red  (score < 34) */
+  --rec-mid: #F2C53D;       /* recovery yellow (34-66) */
+  --rec-high: #03E095;      /* recovery green (> 66) */
+  --strain: #F0A85A;        /* strain amber */
+  --strain-deep: #9C5A14;
+  --sleep: #4A90E2;         /* sleep blue */
+  --sleep-deep: #2F6FCB;
+  --sleep-rem: #8E6FD6;
+  --positive: #03E095;
+  --warning: #F2C53D;
+  --critical: #E0463C;
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 body {
+  margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .font-display {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Heavy tabular numerals for the big metric numbers */
+.tabnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-mut);
 }
 
 * {
   scrollbar-color: var(--border) transparent;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.5s ease both;
 }
