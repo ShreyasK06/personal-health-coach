@@ -1,8 +1,9 @@
 // Trends screen: full-history line charts of recovery, strain, sleep, and HRV
-// over every available day. Each metric gets a card with its latest value, an
-// average, and a wide SVG line built from the Sparkline component. Reads the
-// days array passed by App.
-import type { DayView } from '../lib/firebase'
+// over every available day. Each metric gets a tappable card with its latest
+// value, an average, and a wide SVG line built from the Sparkline component;
+// tapping a card opens that metric's in-depth detail sheet at the latest day.
+// Reads the days array passed by App.
+import type { DayView, DetailKind } from '../lib/firebase'
 import { Sparkline } from '../components/Sparkline'
 import { SectionLabel } from '../components/SectionLabel'
 
@@ -12,13 +13,14 @@ interface TrendDef {
   unit: string
   pick: (d: DayView) => number | null
   decimals: number
+  kind: DetailKind
 }
 
 const TRENDS: TrendDef[] = [
-  { label: 'Recovery', color: 'var(--rec-high)', unit: 'of 100', pick: (d) => d.recovery?.score ?? null, decimals: 0 },
-  { label: 'Strain', color: 'var(--strain)', unit: 'of 21', pick: (d) => d.strain.strain, decimals: 1 },
-  { label: 'Sleep', color: 'var(--sleep)', unit: 'of 100', pick: (d) => d.sleep?.score ?? null, decimals: 0 },
-  { label: 'HRV', color: 'var(--gold)', unit: 'ms', pick: (d) => d.hrvMs, decimals: 0 },
+  { label: 'Recovery', color: 'var(--rec-high)', unit: 'of 100', pick: (d) => d.recovery?.score ?? null, decimals: 0, kind: 'recovery' },
+  { label: 'Strain', color: 'var(--strain)', unit: 'of 21', pick: (d) => d.strain.strain, decimals: 1, kind: 'strain' },
+  { label: 'Sleep', color: 'var(--sleep)', unit: 'of 100', pick: (d) => d.sleep?.score ?? null, decimals: 0, kind: 'sleep' },
+  { label: 'HRV', color: 'var(--gold)', unit: 'ms', pick: (d) => d.hrvMs, decimals: 0, kind: 'hrv' },
 ]
 
 function avg(values: (number | null)[]): number | null {
@@ -35,8 +37,15 @@ function latest(values: (number | null)[]): number | null {
   return null
 }
 
-export function Trends({ days }: { days: DayView[] }) {
+export function Trends({
+  days,
+  onOpenDetail,
+}: {
+  days: DayView[]
+  onOpenDetail: (kind: DetailKind, index: number) => void
+}) {
   const span = days.length
+  const latestIndex = days.length - 1
 
   return (
     <div className="animate-fade-up flex flex-col">
@@ -56,9 +65,11 @@ export function Trends({ days }: { days: DayView[] }) {
           const last = latest(values)
           const mean = avg(values)
           return (
-            <div
+            <button
               key={t.label}
-              className="rounded-[18px] border p-4"
+              type="button"
+              onClick={() => onOpenDetail(t.kind, latestIndex)}
+              className="w-full rounded-[18px] border p-4 text-left transition-colors"
               style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
             >
               <div className="mb-3 flex items-start justify-between">
@@ -86,7 +97,7 @@ export function Trends({ days }: { days: DayView[] }) {
                 </div>
               </div>
               <Sparkline values={values} color={t.color} width={388} height={64} strokeWidth={2.2} />
-            </div>
+            </button>
           )
         })}
       </div>

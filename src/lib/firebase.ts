@@ -7,6 +7,9 @@ import type { DailyResult } from './healthExport'
 
 export const FIREBASE_DB_URL = 'https://health-coach-76bf2-default-rtdb.firebaseio.com'
 
+/** Identifies which "in-depth detail" sheet to open for a tapped metric. */
+export type DetailKind = 'recovery' | 'sleep' | 'strain' | 'load' | 'hrv' | 'rhr' | 'respiratory'
+
 export interface DayView extends DailyResult {
   hrvMs: number | null
   restingHr: number | null

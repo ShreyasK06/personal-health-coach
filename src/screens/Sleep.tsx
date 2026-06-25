@@ -2,8 +2,9 @@
 // night rendered as a semicircle performance Gauge (sleep.score / Optimal),
 // an asleep -> wake time row, a colored stage breakdown bar (deep / core /
 // rem / awake) with total asleep time, and the efficiency percentage. Reads
-// the days array and the currently selected index passed by App.
-import type { DayView } from '../lib/firebase'
+// the days array and the currently selected index passed by App. Tapping the
+// Gauge opens the in-depth Sleep detail sheet via onOpenDetail.
+import type { DayView, DetailKind } from '../lib/firebase'
 import { Gauge } from '../components/Gauge'
 import { SectionLabel } from '../components/SectionLabel'
 import { StatePill } from '../components/StatePill'
@@ -32,10 +33,12 @@ export function Sleep({
   days,
   selectedIndex,
   onSelectIndex,
+  onOpenDetail,
 }: {
   days: DayView[]
   selectedIndex: number
   onSelectIndex: (i: number) => void
+  onOpenDetail: (kind: DetailKind, index: number) => void
 }) {
   const day = days[selectedIndex]
   const isLatest = selectedIndex === days.length - 1
@@ -85,6 +88,7 @@ export function Sleep({
             label="of 100"
             caption={sleepWord(sleep.score)}
             size={264}
+            onClick={() => onOpenDetail('sleep', selectedIndex)}
           />
         ) : (
           <div className="py-12 text-sm" style={{ color: 'var(--text-mut)' }}>
