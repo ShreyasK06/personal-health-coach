@@ -49,7 +49,7 @@ export function MetricDetailSheet({
         <button
           type="button"
           onClick={onClose}
-          aria-label="Back"
+          aria-label="Close"
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
           style={{ color: 'var(--text-dim)', background: 'var(--surface)' }}
         >

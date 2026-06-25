@@ -93,7 +93,10 @@ export default function App() {
   const lastIndex = days.length - 1
   const activeIndex = selectedIndex == null ? lastIndex : Math.min(selectedIndex, lastIndex)
 
-  const detailDay = detail ? days[detail.index] : null
+  // Clamp the open detail's day index in case a refresh returned a shorter
+  // `days` array while the sheet was open, so it never points out of range.
+  const detailIndex = detail ? Math.min(Math.max(detail.index, 0), lastIndex) : 0
+  const detailDay = detail ? days[detailIndex] : null
 
   return (
     <AppShell active={tab} onTab={setTab} onRefresh={handleRefresh} refreshing={refreshing}>
@@ -119,21 +122,21 @@ export default function App() {
         <MetricDetailSheet
           title={DETAIL_TITLE[detail.kind]}
           date={detailDay.date}
-          isLatest={detail.index === lastIndex}
-          canGoBack={detail.index > 0}
-          canGoForward={detail.index < lastIndex}
-          onBack={() => setDetail((d) => (d ? { ...d, index: Math.max(0, d.index - 1) } : d))}
-          onForward={() => setDetail((d) => (d ? { ...d, index: Math.min(lastIndex, d.index + 1) } : d))}
+          isLatest={detailIndex === lastIndex}
+          canGoBack={detailIndex > 0}
+          canGoForward={detailIndex < lastIndex}
+          onBack={() => setDetail((d) => (d ? { ...d, index: Math.max(0, detailIndex - 1) } : d))}
+          onForward={() => setDetail((d) => (d ? { ...d, index: Math.min(lastIndex, detailIndex + 1) } : d))}
           onClose={() => setDetail(null)}
         >
-          {detail.kind === 'recovery' && <RecoveryDetail days={days} index={detail.index} />}
-          {detail.kind === 'sleep' && <SleepDetail days={days} index={detail.index} />}
-          {detail.kind === 'strain' && <StrainDetail days={days} index={detail.index} />}
-          {detail.kind === 'load' && <LoadReadiness days={days} index={detail.index} />}
-          {detail.kind === 'hrv' && <SimpleMetricDetail days={days} index={detail.index} metric="hrv" />}
-          {detail.kind === 'rhr' && <SimpleMetricDetail days={days} index={detail.index} metric="rhr" />}
+          {detail.kind === 'recovery' && <RecoveryDetail days={days} index={detailIndex} />}
+          {detail.kind === 'sleep' && <SleepDetail days={days} index={detailIndex} />}
+          {detail.kind === 'strain' && <StrainDetail days={days} index={detailIndex} />}
+          {detail.kind === 'load' && <LoadReadiness days={days} index={detailIndex} />}
+          {detail.kind === 'hrv' && <SimpleMetricDetail days={days} index={detailIndex} metric="hrv" />}
+          {detail.kind === 'rhr' && <SimpleMetricDetail days={days} index={detailIndex} metric="rhr" />}
           {detail.kind === 'respiratory' && (
-            <SimpleMetricDetail days={days} index={detail.index} metric="respiratory" />
+            <SimpleMetricDetail days={days} index={detailIndex} metric="respiratory" />
           )}
         </MetricDetailSheet>
       )}
