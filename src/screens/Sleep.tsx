@@ -1,11 +1,13 @@
-// Sleep screen: the latest night rendered as a semicircle performance Gauge
-// (sleep.score / Optimal), an asleep -> wake time row, a colored stage
-// breakdown bar (deep / core / rem / awake) with total asleep time, and the
-// efficiency percentage. Reads the latest DayView from the days array.
+// Sleep screen: a DateNav pill for stepping between nights, the selected
+// night rendered as a semicircle performance Gauge (sleep.score / Optimal),
+// an asleep -> wake time row, a colored stage breakdown bar (deep / core /
+// rem / awake) with total asleep time, and the efficiency percentage. Reads
+// the days array and the currently selected index passed by App.
 import type { DayView } from '../lib/firebase'
 import { Gauge } from '../components/Gauge'
 import { SectionLabel } from '../components/SectionLabel'
 import { StatePill } from '../components/StatePill'
+import { DateNav } from '../components/DateNav'
 import { clockOf, hoursMinutes, longDate } from '../lib/uiHelpers'
 
 function sleepWord(score: number): string {
@@ -15,21 +17,34 @@ function sleepWord(score: number): string {
   return 'Poor'
 }
 
-const STAGES: { key: keyof DayView; label: string; color: string }[] = [
+const STAGES: {
+  key: keyof Pick<DayView, 'deepMinutes' | 'coreMinutes' | 'remMinutes' | 'awakeMinutes'>
+  label: string
+  color: string
+}[] = [
   { key: 'deepMinutes', label: 'Deep', color: 'var(--sleep-deep)' },
   { key: 'coreMinutes', label: 'Core', color: 'var(--sleep)' },
   { key: 'remMinutes', label: 'REM', color: 'var(--sleep-rem)' },
   { key: 'awakeMinutes', label: 'Awake', color: 'var(--text-mut)' },
 ]
 
-export function Sleep({ days }: { days: DayView[] }) {
-  const day = days[days.length - 1]
+export function Sleep({
+  days,
+  selectedIndex,
+  onSelectIndex,
+}: {
+  days: DayView[]
+  selectedIndex: number
+  onSelectIndex: (i: number) => void
+}) {
+  const day = days[selectedIndex]
+  const isLatest = selectedIndex === days.length - 1
   const sleep = day.sleep
 
   const stageValues = STAGES.map((s) => ({
     label: s.label,
     color: s.color,
-    minutes: Math.max(0, (day[s.key] as number | null) ?? 0),
+    minutes: Math.max(0, day[s.key] ?? 0),
   }))
   const total = stageValues.reduce((a, s) => a + s.minutes, 0)
 
@@ -39,13 +54,22 @@ export function Sleep({ days }: { days: DayView[] }) {
 
   return (
     <div className="animate-fade-up flex flex-col">
-      <header className="mb-2">
+      <header className="mb-2 flex flex-col">
         <h1 className="font-display text-[34px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>
           Sleep
         </h1>
         <p className="mt-0.5 text-sm" style={{ color: 'var(--text-mut)' }}>
-          Last night, {longDate(day.date)}
+          {isLatest ? 'Last night, ' : ''}
+          {longDate(day.date)}
         </p>
+        <DateNav
+          date={day.date}
+          isLatest={isLatest}
+          canGoBack={selectedIndex > 0}
+          canGoForward={selectedIndex < days.length - 1}
+          onBack={() => onSelectIndex(Math.max(0, selectedIndex - 1))}
+          onForward={() => onSelectIndex(Math.min(days.length - 1, selectedIndex + 1))}
+        />
       </header>
 
       <SectionLabel>Sleep performance</SectionLabel>
