@@ -2,7 +2,9 @@
 // Firebase via loadHealthData(), manages loading / error / empty / ready states,
 // and renders the AppShell with a BottomNav that switches between the Today,
 // Trends, and Sleep screens. The gold "+" button refreshes from Firebase, and
-// the empty state keeps the legacy CSV import as a secondary affordance.
+// the empty state keeps the legacy CSV import as a secondary affordance. Also
+// owns `selectedIndex`, the day Today/Sleep currently display (defaults to the
+// latest day, steppable via DateNav).
 import { useCallback, useEffect, useState } from 'react'
 import { loadHealthData } from './lib/firebase'
 import type { DayView } from './lib/firebase'
@@ -23,6 +25,9 @@ export default function App() {
   const [state, setState] = useState<LoadState>({ status: 'loading' })
   const [tab, setTab] = useState<TabId>('today')
   const [refreshing, setRefreshing] = useState(false)
+  // Index into `days` that Today/Sleep currently display. Defaults to the
+  // latest day; reset to the latest whenever a fresh `days` array lands.
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
 
   const load = useCallback(async (soft = false) => {
     if (soft) setRefreshing(true)
@@ -41,8 +46,18 @@ export default function App() {
     }
   }, [])
 
+  // Fetch once on mount. The async work (and its setState calls) runs inside
+  // loadHealthData()/load() after a microtask tick, not synchronously inside
+  // the effect body, which satisfies react-hooks/set-state-in-effect.
   useEffect(() => {
-    void load()
+    let cancelled = false
+    void (async () => {
+      if (cancelled) return
+      await load()
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [load])
 
   const handleRefresh = useCallback(() => {
@@ -56,12 +71,26 @@ export default function App() {
     return <EmptyScreen onRefresh={() => load(false)} onCsv={(days) => setState({ status: 'ready', days })} />
 
   const { days } = state
+  const lastIndex = days.length - 1
+  const activeIndex = selectedIndex == null ? lastIndex : Math.min(selectedIndex, lastIndex)
 
   return (
     <AppShell active={tab} onTab={setTab} onRefresh={handleRefresh} refreshing={refreshing}>
-      {tab === 'today' && <Today days={days} />}
+      {tab === 'today' && (
+        <Today
+          days={days}
+          selectedIndex={activeIndex}
+          onSelectIndex={setSelectedIndex}
+        />
+      )}
       {tab === 'trends' && <Trends days={days} />}
-      {tab === 'sleep' && <Sleep days={days} />}
+      {tab === 'sleep' && (
+        <Sleep
+          days={days}
+          selectedIndex={activeIndex}
+          onSelectIndex={setSelectedIndex}
+        />
+      )}
     </AppShell>
   )
 }

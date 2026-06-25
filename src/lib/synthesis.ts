@@ -38,9 +38,9 @@ export function buildSynthesis(day: DayView): string {
   else if (parts.length === 1) lead = `${capitalize(parts[0])}.`
 
   // Recommendation clause from recovery band.
-  let rec = ''
   const band = day.recovery?.band
   const strain = day.strain.strain
+  let rec: string
   if (band === 'green') {
     rec = 'Your body looks primed to push today.'
   } else if (band === 'amber') {
