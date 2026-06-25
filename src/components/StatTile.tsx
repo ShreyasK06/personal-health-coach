@@ -13,6 +13,7 @@ interface StatTileProps {
   pill?: { text: string; tone: PillTone }
   state?: string // small state word under the number
   stateColor?: string
+  onClick?: () => void
 }
 
 export function StatTile({
@@ -24,11 +25,44 @@ export function StatTile({
   pill,
   state,
   stateColor = 'var(--text-mut)',
+  onClick,
 }: StatTileProps) {
+  const interactive = onClick != null
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
+    if (!onClick) return
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      onClick()
+    }
+  }
+
   return (
     <div
-      className="flex flex-col justify-between gap-3 rounded-[18px] border p-4"
-      style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+      className="flex flex-col justify-between gap-3 rounded-[18px] border p-4 transition-colors"
+      style={{
+        borderColor: 'var(--border)',
+        background: 'var(--surface)',
+        cursor: interactive ? 'pointer' : undefined,
+      }}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={interactive ? handleKeyDown : undefined}
+      onMouseEnter={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.borderColor = 'var(--border-strong)'
+            }
+          : undefined
+      }
+      onMouseLeave={
+        interactive
+          ? (e) => {
+              e.currentTarget.style.borderColor = 'var(--border)'
+            }
+          : undefined
+      }
     >
       <div className="flex items-start justify-between">
         <span className="section-label" style={{ color: 'var(--gold)' }}>
