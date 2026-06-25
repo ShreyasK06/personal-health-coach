@@ -44,6 +44,22 @@ async function dayViewsFromZip(file: File): Promise<DayView[]> {
         awakeMinutes: sleep?.awakeMinutes ?? null,
         bedTime: sleep?.bedTime ?? null,
         wakeTime: sleep?.wakeTime ?? null,
+        // CSV import has no Apple activity metrics; always fall back to all-null.
+        activity: {
+          steps: null,
+          activeEnergy: null,
+          basalEnergy: null,
+          totalEnergy: null,
+          exerciseMinutes: null,
+          standHours: null,
+          standMinutes: null,
+          flights: null,
+          distanceKm: null,
+          physicalEffort: null,
+          avgHr: null,
+          maxHr: null,
+          noiseDb: null,
+        },
       }
     })
     .sort((a, b) => a.date.localeCompare(b.date))

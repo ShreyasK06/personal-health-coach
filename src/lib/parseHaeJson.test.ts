@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { parseFirebaseExports } from './parseHaeJson'
+import { parseFirebaseExports, parseActivity } from './parseHaeJson'
 import { buildDayViews } from './firebase'
 
 // Small SYNTHETIC Health Auto Export Firebase payload array. Never real
@@ -155,5 +155,154 @@ describe('buildDayViews', () => {
     const day2 = dayViews.find((d) => d.date === '2026-06-21')!
     expect(day2.asleepMinutes).toBeNull()
     expect(day2.bedTime).toBeNull()
+  })
+})
+
+// Small SYNTHETIC payload exercising the Apple activity metrics. Never real
+// health data. Single day 2026-06-20 with steps, calories, exercise, stand,
+// flights, distance (in miles), physical effort, heart rate and noise.
+const ACTIVITY_PAYLOADS: unknown[] = [
+  {
+    data: {
+      metrics: [
+        {
+          name: 'step_count',
+          units: 'count',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', qty: 4000, source: 'Test Watch' },
+            { date: '2026-06-20 18:00:00 -0400', qty: 3500, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'active_energy',
+          units: 'kcal',
+          data: [{ date: '2026-06-20 12:00:00 -0400', qty: 300, source: 'Test Watch' }],
+        },
+        {
+          name: 'basal_energy_burned',
+          units: 'kcal',
+          data: [{ date: '2026-06-20 12:00:00 -0400', qty: 1500, source: 'Test Watch' }],
+        },
+        {
+          name: 'apple_exercise_time',
+          units: 'min',
+          data: [
+            { date: '2026-06-20 08:00:00 -0400', qty: 20, source: 'Test Watch' },
+            { date: '2026-06-20 17:00:00 -0400', qty: 15, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'apple_stand_hour',
+          units: 'count',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', qty: 1, source: 'Test Watch' },
+            { date: '2026-06-20 14:00:00 -0400', qty: 1, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'flights_climbed',
+          units: 'count',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', qty: 2, source: 'Test Watch' },
+            { date: '2026-06-20 15:00:00 -0400', qty: 3, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'walking_running_distance',
+          units: 'mi',
+          data: [{ date: '2026-06-20 12:00:00 -0400', qty: 5, source: 'Test Watch' }],
+        },
+        {
+          name: 'physical_effort',
+          units: 'kcal/hr·kg',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', qty: 2, source: 'Test Watch' },
+            { date: '2026-06-20 18:00:00 -0400', qty: 4, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'heart_rate',
+          units: 'count/min',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', Min: 55, Max: 90, Avg: 70, source: 'Test Watch' },
+            { date: '2026-06-20 18:00:00 -0400', Min: 60, Max: 120, Avg: 80, source: 'Test Watch' },
+          ],
+        },
+        {
+          name: 'environmental_audio_exposure',
+          units: 'dBASPL',
+          data: [
+            { date: '2026-06-20 09:00:00 -0400', qty: 65, source: 'Test Watch' },
+            { date: '2026-06-20 18:00:00 -0400', qty: 75, source: 'Test Watch' },
+          ],
+        },
+      ],
+    },
+  },
+]
+
+describe('parseActivity', () => {
+  it('sums step_count points for the day', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    expect(activityByDate.get('2026-06-20')?.steps).toBe(7500)
+  })
+
+  it('computes totalEnergy as the sum of active_energy and basal_energy_burned', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    const day = activityByDate.get('2026-06-20')!
+    expect(day.activeEnergy).toBe(300)
+    expect(day.basalEnergy).toBe(1500)
+    expect(day.totalEnergy).toBe(1800)
+  })
+
+  it('sums apple_exercise_time minutes', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    expect(activityByDate.get('2026-06-20')?.exerciseMinutes).toBe(35)
+  })
+
+  it('sums apple_stand_hour', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    expect(activityByDate.get('2026-06-20')?.standHours).toBe(2)
+  })
+
+  it('sums flights_climbed', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    expect(activityByDate.get('2026-06-20')?.flights).toBe(5)
+  })
+
+  it('converts walking_running_distance from miles to km using the units field', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    expect(activityByDate.get('2026-06-20')?.distanceKm).toBeCloseTo(5 * 1.60934, 5)
+  })
+
+  it('computes avgHr as the mean of Avg and maxHr as the max of Max across heart_rate points', () => {
+    const activityByDate = parseActivity(ACTIVITY_PAYLOADS)
+    const day = activityByDate.get('2026-06-20')!
+    expect(day.avgHr).toBeCloseTo(75, 5) // mean(70, 80)
+    expect(day.maxHr).toBe(120) // max(90, 120)
+  })
+
+  it('returns an all-null ActivityDay for a day with no activity metrics, and buildDayViews still produces a DayView for it', () => {
+    const activityByDate = parseActivity(PAYLOADS)
+    // PAYLOADS (sleep/HRV fixtures above) has no activity metrics at all.
+    expect(activityByDate.size).toBe(0)
+
+    const dayViews = buildDayViews(PAYLOADS)
+    const day1 = dayViews.find((d) => d.date === '2026-06-20')!
+    expect(day1.activity).toEqual({
+      steps: null,
+      activeEnergy: null,
+      basalEnergy: null,
+      totalEnergy: null,
+      exerciseMinutes: null,
+      standHours: null,
+      standMinutes: null,
+      flights: null,
+      distanceKm: null,
+      physicalEffort: null,
+      avgHr: null,
+      maxHr: null,
+      noiseDb: null,
+    })
   })
 })

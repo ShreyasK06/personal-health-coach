@@ -1,7 +1,7 @@
 // Loads Health Auto Export payloads from the Firebase Realtime Database and
 // turns them into per-day views the UI can render directly, reusing the
 // existing scoring engines via computeDailyResults.
-import { parseFirebaseExports } from './parseHaeJson'
+import { parseFirebaseExports, parseActivity } from './parseHaeJson'
 import { computeDailyResults, DEFAULT_PROFILE } from './healthExport'
 import type { DailyResult } from './healthExport'
 
@@ -9,6 +9,41 @@ export const FIREBASE_DB_URL = 'https://health-coach-76bf2-default-rtdb.firebase
 
 /** Identifies which "in-depth detail" sheet to open for a tapped metric. */
 export type DetailKind = 'recovery' | 'sleep' | 'strain' | 'load' | 'hrv' | 'rhr' | 'respiratory'
+
+/** Per-day Apple activity metrics (steps, calories, exercise, stand, distance, etc.). */
+export interface ActivityDay {
+  steps: number | null
+  activeEnergy: number | null // kcal
+  basalEnergy: number | null // kcal
+  totalEnergy: number | null // active + basal (null if both null)
+  exerciseMinutes: number | null
+  standHours: number | null
+  standMinutes: number | null
+  flights: number | null
+  distanceKm: number | null
+  physicalEffort: number | null
+  avgHr: number | null
+  maxHr: number | null
+  noiseDb: number | null
+}
+
+export const ACTIVITY_GOALS = { moveKcal: 500, exerciseMin: 30, standHours: 12 } as const
+
+const EMPTY_ACTIVITY_DAY: ActivityDay = {
+  steps: null,
+  activeEnergy: null,
+  basalEnergy: null,
+  totalEnergy: null,
+  exerciseMinutes: null,
+  standHours: null,
+  standMinutes: null,
+  flights: null,
+  distanceKm: null,
+  physicalEffort: null,
+  avgHr: null,
+  maxHr: null,
+  noiseDb: null,
+}
 
 export interface DayView extends DailyResult {
   hrvMs: number | null
@@ -22,12 +57,14 @@ export interface DayView extends DailyResult {
   awakeMinutes: number | null
   bedTime: string | null
   wakeTime: string | null
+  activity: ActivityDay
 }
 
 /** Builds per-day views from raw Health Auto Export payloads, merging the
  * computed daily scores with that day's raw night/sleep fields. */
 export function buildDayViews(payloads: unknown[]): DayView[] {
   const { nights, sleeps, workoutsByDate } = parseFirebaseExports(payloads)
+  const activityByDate = parseActivity(payloads)
 
   const dailyResults = computeDailyResults(
     nights,
@@ -57,6 +94,7 @@ export function buildDayViews(payloads: unknown[]): DayView[] {
       awakeMinutes: sleep?.awakeMinutes ?? null,
       bedTime: sleep?.bedTime ?? null,
       wakeTime: sleep?.wakeTime ?? null,
+      activity: activityByDate.get(result.date) ?? EMPTY_ACTIVITY_DAY,
     }
   })
 

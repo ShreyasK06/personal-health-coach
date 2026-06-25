@@ -4,6 +4,7 @@
 // shapes the CSV parser in healthExport.ts produces, so the existing scoring engines
 // can be reused unchanged.
 import type { NightSample, SleepInput, WorkoutInput } from '../metrics/types'
+import type { ActivityDay } from './firebase'
 
 interface MetricPoint {
   date: string
@@ -94,6 +95,143 @@ function getMetrics(payload: HaePayload): Metric[] {
 
 function getWorkouts(payload: HaePayload): RawWorkout[] {
   return payload?.data?.workouts ?? payload?.workouts ?? []
+}
+
+/** Sums qty across a day's points; null if no points are present. */
+function sumQty(points: MetricPoint[] | undefined): number | null {
+  if (!points || points.length === 0) return null
+  const values = points.filter((p) => isFiniteNumber(p.qty)).map((p) => p.qty as number)
+  if (values.length === 0) return null
+  return values.reduce((sum, v) => sum + v, 0)
+}
+
+/** Aggregates Apple activity metrics (steps, calories, exercise, stand, distance,
+ * flights, heart rate, etc.) per day, keyed by YYYY-MM-DD. */
+export function parseActivity(payloads: unknown[]): Map<string, ActivityDay> {
+  const stepsByDate = new Map<string, MetricPoint[]>()
+  const activeEnergyByDate = new Map<string, MetricPoint[]>()
+  const basalEnergyByDate = new Map<string, MetricPoint[]>()
+  const exerciseByDate = new Map<string, MetricPoint[]>()
+  const standHoursByDate = new Map<string, MetricPoint[]>()
+  const standMinutesByDate = new Map<string, MetricPoint[]>()
+  const flightsByDate = new Map<string, MetricPoint[]>()
+  const distanceByDate = new Map<string, MetricPoint[]>()
+  let distanceUnits: string | undefined
+  const physicalEffortByDate = new Map<string, number[]>()
+  const avgHrByDate = new Map<string, number[]>()
+  const maxHrByDate = new Map<string, number[]>()
+  const noiseByDate = new Map<string, number[]>()
+
+  function pushPoint(map: Map<string, MetricPoint[]>, date: string, point: MetricPoint) {
+    const arr = map.get(date) ?? []
+    arr.push(point)
+    map.set(date, arr)
+  }
+
+  for (const raw of payloads) {
+    const payload = (raw ?? {}) as HaePayload
+    const metrics = getMetrics(payload)
+
+    for (const metric of metrics) {
+      const points = metric?.data ?? []
+      if (metric?.name === 'step_count') {
+        for (const point of points) pushPoint(stepsByDate, dayOf(point), point)
+      } else if (metric?.name === 'active_energy') {
+        for (const point of points) pushPoint(activeEnergyByDate, dayOf(point), point)
+      } else if (metric?.name === 'basal_energy_burned') {
+        for (const point of points) pushPoint(basalEnergyByDate, dayOf(point), point)
+      } else if (metric?.name === 'apple_exercise_time') {
+        for (const point of points) pushPoint(exerciseByDate, dayOf(point), point)
+      } else if (metric?.name === 'apple_stand_hour') {
+        for (const point of points) pushPoint(standHoursByDate, dayOf(point), point)
+      } else if (metric?.name === 'apple_stand_time') {
+        for (const point of points) pushPoint(standMinutesByDate, dayOf(point), point)
+      } else if (metric?.name === 'flights_climbed') {
+        for (const point of points) pushPoint(flightsByDate, dayOf(point), point)
+      } else if (metric?.name === 'walking_running_distance') {
+        if (metric?.units) distanceUnits = metric.units
+        for (const point of points) pushPoint(distanceByDate, dayOf(point), point)
+      } else if (metric?.name === 'physical_effort') {
+        for (const point of points) {
+          if (!isFiniteNumber(point.qty)) continue
+          const date = dayOf(point)
+          const arr = physicalEffortByDate.get(date) ?? []
+          arr.push(point.qty)
+          physicalEffortByDate.set(date, arr)
+        }
+      } else if (metric?.name === 'heart_rate') {
+        for (const point of points) {
+          const date = dayOf(point)
+          if (isFiniteNumber(point.Avg)) {
+            const arr = avgHrByDate.get(date) ?? []
+            arr.push(point.Avg)
+            avgHrByDate.set(date, arr)
+          }
+          if (isFiniteNumber(point.Max)) {
+            const arr = maxHrByDate.get(date) ?? []
+            arr.push(point.Max)
+            maxHrByDate.set(date, arr)
+          }
+        }
+      } else if (metric?.name === 'environmental_audio_exposure') {
+        for (const point of points) {
+          if (!isFiniteNumber(point.qty)) continue
+          const date = dayOf(point)
+          const arr = noiseByDate.get(date) ?? []
+          arr.push(point.qty)
+          noiseByDate.set(date, arr)
+        }
+      }
+    }
+  }
+
+  const distanceMultiplier = distanceUnits?.toLowerCase().includes('mi')
+    ? 1.60934
+    : 1
+
+  const allDates = new Set<string>([
+    ...stepsByDate.keys(),
+    ...activeEnergyByDate.keys(),
+    ...basalEnergyByDate.keys(),
+    ...exerciseByDate.keys(),
+    ...standHoursByDate.keys(),
+    ...standMinutesByDate.keys(),
+    ...flightsByDate.keys(),
+    ...distanceByDate.keys(),
+    ...physicalEffortByDate.keys(),
+    ...avgHrByDate.keys(),
+    ...maxHrByDate.keys(),
+    ...noiseByDate.keys(),
+  ])
+
+  const activityByDate = new Map<string, ActivityDay>()
+  for (const date of allDates) {
+    const activeEnergy = sumQty(activeEnergyByDate.get(date))
+    const basalEnergy = sumQty(basalEnergyByDate.get(date))
+    const totalEnergy =
+      activeEnergy == null && basalEnergy == null
+        ? null
+        : (activeEnergy ?? 0) + (basalEnergy ?? 0)
+    const rawDistance = sumQty(distanceByDate.get(date))
+
+    activityByDate.set(date, {
+      steps: sumQty(stepsByDate.get(date)),
+      activeEnergy,
+      basalEnergy,
+      totalEnergy,
+      exerciseMinutes: sumQty(exerciseByDate.get(date)),
+      standHours: sumQty(standHoursByDate.get(date)),
+      standMinutes: sumQty(standMinutesByDate.get(date)),
+      flights: sumQty(flightsByDate.get(date)),
+      distanceKm: rawDistance == null ? null : rawDistance * distanceMultiplier,
+      physicalEffort: mean(physicalEffortByDate.get(date) ?? []),
+      avgHr: mean(avgHrByDate.get(date) ?? []),
+      maxHr: maxHrByDate.has(date) ? Math.max(...(maxHrByDate.get(date) ?? [])) : null,
+      noiseDb: mean(noiseByDate.get(date) ?? []),
+    })
+  }
+
+  return activityByDate
 }
 
 export function parseFirebaseExports(payloads: unknown[]): {
