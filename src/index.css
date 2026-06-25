@@ -27,6 +27,38 @@
   --positive: #03E095;
   --warning: #F2C53D;
   --critical: #E0463C;
+
+  /* Card radius, shared by all rounded surfaces. */
+  --radius: 18px;
+
+  /* Vivid metric colors + gradient pairs for the richer visual library
+     (activity rings, bar/area charts, metric cards). */
+  --move: #FF375F;
+  --move-grad-from: #FF2D55;
+  --move-grad-to: #FF6B8B;
+  --exercise: #3DDC84;
+  --exercise-grad-from: #1FB866;
+  --exercise-grad-to: #5FF3A0;
+  --stand: #22D3EE;
+  --stand-grad-from: #0FB5CE;
+  --stand-grad-to: #5BE8FF;
+  --steps: #FFB020;
+  --steps-grad-from: #E8901A;
+  --steps-grad-to: #FFC658;
+
+  /* Gradient pairs for existing metric tokens (recovery/strain/sleep/gold). */
+  --rec-low-grad-from: #C93A31;
+  --rec-low-grad-to: #F06158;
+  --rec-mid-grad-from: #D9A92A;
+  --rec-mid-grad-to: #F7D766;
+  --rec-high-grad-from: #02BD7C;
+  --rec-high-grad-to: #4DF5B8;
+  --strain-grad-from: var(--strain-deep);
+  --strain-grad-to: #F7C285;
+  --sleep-grad-from: var(--sleep-deep);
+  --sleep-grad-to: #7DB6F0;
+  --gold-grad-from: var(--gold-deep);
+  --gold-grad-to: #F7D27E;
 }
 
 html,
@@ -80,4 +112,103 @@ body {
 
 .animate-fade-up {
   animation: fadeUp 0.5s ease both;
+}
+
+/* Glow shadow utilities, tinted to each metric color at low alpha. Used by
+   the activity rings, metric cards, and gradient accents in the richer
+   visual library. */
+.glow-move {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--move) 55%, transparent);
+}
+
+.glow-exercise {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--exercise) 55%, transparent);
+}
+
+.glow-stand {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--stand) 55%, transparent);
+}
+
+.glow-gold {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--gold) 55%, transparent);
+}
+
+.glow-sleep {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--sleep) 55%, transparent);
+}
+
+/* Translucent glass surface: used for premium overlay cards / chrome that
+   should sit above the gradient hero wash. */
+.glass {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* Subtle dark gradient wash, suitable as a page-header background behind a
+   GradientHero title block. */
+.hero-grad {
+  background:
+    radial-gradient(120% 140% at 15% -10%, color-mix(in srgb, var(--gold) 16%, transparent) 0%, transparent 55%),
+    linear-gradient(160deg, var(--surface) 0%, var(--bg) 70%);
+}
+
+@keyframes ringSweep {
+  from {
+    stroke-dashoffset: var(--ring-circumference, 0);
+  }
+  to {
+    stroke-dashoffset: var(--ring-offset, 0);
+  }
+}
+
+.animate-ring-sweep {
+  animation: ringSweep 1.1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    transparent 30%,
+    color-mix(in srgb, var(--text) 14%, transparent) 50%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-count-up {
+  animation: countUp 0.4s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .animate-ring-sweep,
+  .animate-shimmer,
+  .animate-count-up {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
