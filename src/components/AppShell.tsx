@@ -20,7 +20,7 @@ export function AppShell({
   return (
     <div className="flex min-h-screen w-full justify-center" style={{ background: 'var(--bg)' }}>
       <div
-        className="flex min-h-screen w-full max-w-[460px] flex-col border-x"
+        className="relative flex min-h-screen w-full max-w-[460px] flex-col border-x"
         style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
       >
         <main className="flex-1 px-5 pb-8 pt-7">{children}</main>
