@@ -11,6 +11,7 @@ import type { DayView, DetailKind } from './lib/firebase'
 import { AppShell } from './components/AppShell'
 import type { TabId } from './components/BottomNav'
 import { Today } from './screens/Today'
+import { Activity } from './screens/Activity'
 import { Trends } from './screens/Trends'
 import { Sleep } from './screens/Sleep'
 import { LoadingScreen, ErrorScreen, EmptyScreen } from './screens/StatusScreens'
@@ -20,6 +21,7 @@ import { SleepDetail } from './screens/details/SleepDetail'
 import { StrainDetail } from './screens/details/StrainDetail'
 import { LoadReadiness } from './screens/details/LoadReadiness'
 import { SimpleMetricDetail } from './screens/details/SimpleMetricDetail'
+import { ActivityDetail } from './screens/details/ActivityDetail'
 
 const DETAIL_TITLE: Record<DetailKind, string> = {
   recovery: 'Recovery',
@@ -29,6 +31,13 @@ const DETAIL_TITLE: Record<DetailKind, string> = {
   hrv: 'HRV',
   rhr: 'Resting HR',
   respiratory: 'Respiratory',
+  steps: 'Steps',
+  activeEnergy: 'Active calories',
+  totalEnergy: 'Total calories',
+  exerciseMinutes: 'Exercise',
+  standHours: 'Stand',
+  distanceKm: 'Distance',
+  flights: 'Flights',
 }
 
 type LoadState =
@@ -108,6 +117,14 @@ export default function App() {
           onOpenDetail={openDetail}
         />
       )}
+      {tab === 'activity' && (
+        <Activity
+          days={days}
+          selectedIndex={activeIndex}
+          onSelectIndex={setSelectedIndex}
+          onOpenDetail={openDetail}
+        />
+      )}
       {tab === 'trends' && <Trends days={days} onOpenDetail={openDetail} />}
       {tab === 'sleep' && (
         <Sleep
@@ -137,6 +154,15 @@ export default function App() {
           {detail.kind === 'rhr' && <SimpleMetricDetail days={days} index={detailIndex} metric="rhr" />}
           {detail.kind === 'respiratory' && (
             <SimpleMetricDetail days={days} index={detailIndex} metric="respiratory" />
+          )}
+          {(detail.kind === 'steps' ||
+            detail.kind === 'activeEnergy' ||
+            detail.kind === 'totalEnergy' ||
+            detail.kind === 'exerciseMinutes' ||
+            detail.kind === 'standHours' ||
+            detail.kind === 'distanceKm' ||
+            detail.kind === 'flights') && (
+            <ActivityDetail days={days} index={detailIndex} metric={detail.kind} />
           )}
         </MetricDetailSheet>
       )}

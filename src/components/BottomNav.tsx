@@ -1,8 +1,8 @@
-// Bottom tab bar fixed within the centered column: Today / Trends / Sleep with
-// a central circular gold "+" button that refreshes data from Firebase. Active
-// tab is gold, others muted. Rendered by AppShell; onTab switches screens and
-// onRefresh re-runs loadHealthData.
-export type TabId = 'today' | 'trends' | 'sleep'
+// Bottom tab bar fixed within the centered column: Today / Activity / Trends /
+// Sleep with a central circular gold "+" button that refreshes data from
+// Firebase. Active tab is gold, others muted. Rendered by AppShell; onTab
+// switches screens and onRefresh re-runs loadHealthData.
+export type TabId = 'today' | 'activity' | 'trends' | 'sleep'
 
 function TodayIcon({ active }: { active: boolean }) {
   const c = active ? 'var(--gold)' : 'var(--text-mut)'
@@ -10,6 +10,15 @@ function TodayIcon({ active }: { active: boolean }) {
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5V12l3 1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function ActivityIcon({ active }: { active: boolean }) {
+  const c = active ? 'var(--gold)' : 'var(--text-mut)'
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M3 12h4l2.5 7L13.5 5l2.5 7h5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -35,6 +44,7 @@ function SleepIcon({ active }: { active: boolean }) {
 
 const TABS: { id: TabId; label: string; Icon: (p: { active: boolean }) => React.ReactElement }[] = [
   { id: 'today', label: 'Today', Icon: TodayIcon },
+  { id: 'activity', label: 'Activity', Icon: ActivityIcon },
   { id: 'trends', label: 'Trends', Icon: TrendsIcon },
   { id: 'sleep', label: 'Sleep', Icon: SleepIcon },
 ]

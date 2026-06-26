@@ -5,10 +5,15 @@
 // sparkline. Reads the days array and the currently selected index passed by
 // App. Every tile/ring/gauge/card opens the matching in-depth detail sheet via
 // onOpenDetail.
+import { Flame, Footprints } from 'lucide-react'
 import type { DayView, DetailKind } from '../lib/firebase'
+import { ACTIVITY_GOALS } from '../lib/firebase'
 import { RecoveryRing } from '../components/RecoveryRing'
+import { ActivityRings } from '../components/ActivityRings'
+import { GradientHero } from '../components/GradientHero'
 import { SectionLabel } from '../components/SectionLabel'
 import { StatTile } from '../components/StatTile'
+import { MetricCard } from '../components/MetricCard'
 import { SynthesisCard } from '../components/SynthesisCard'
 import { StatePill } from '../components/StatePill'
 import { DateNav } from '../components/DateNav'
@@ -54,19 +59,11 @@ export function Today({
   const sleepScore = day.sleep ? Math.round(day.sleep.score) : null
   const ready = readiness(days, selectedIndex)
   const readinessColor = READINESS_TONE_COLOR[ready.tone]
+  const a = day.activity
 
   return (
     <div className="animate-fade-up flex flex-col gap-1">
-      <header className="mb-2 flex flex-col">
-        <p className="text-sm font-medium" style={{ color: 'var(--text-mut)' }}>
-          {isLatest ? greeting() : 'Looking back'}
-        </p>
-        <h1 className="font-display text-[34px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>
-          Today
-        </h1>
-        <p className="mt-0.5 text-sm" style={{ color: 'var(--text-mut)' }}>
-          {longDate(day.date)}
-        </p>
+      <GradientHero title={isLatest ? greeting() : 'Looking back'} subtitle={longDate(day.date)}>
         <DateNav
           date={day.date}
           isLatest={isLatest}
@@ -75,7 +72,7 @@ export function Today({
           onBack={() => onSelectIndex(Math.max(0, selectedIndex - 1))}
           onForward={() => onSelectIndex(Math.min(days.length - 1, selectedIndex + 1))}
         />
-      </header>
+      </GradientHero>
 
       {/* hero ring */}
       <div className="my-4 flex justify-center">
@@ -90,6 +87,42 @@ export function Today({
             <span className="mt-2 text-sm">No overnight data</span>
           </div>
         )}
+      </div>
+
+      <SectionLabel>Move</SectionLabel>
+      <div className="flex flex-col items-center gap-3 rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <ActivityRings
+          move={a.activeEnergy ?? 0}
+          moveGoal={ACTIVITY_GOALS.moveKcal}
+          exercise={a.exerciseMinutes ?? 0}
+          exerciseGoal={ACTIVITY_GOALS.exerciseMin}
+          stand={a.standHours ?? 0}
+          standGoal={ACTIVITY_GOALS.standHours}
+          size={140}
+        />
+        <div className="grid w-full grid-cols-2 gap-3">
+          <MetricCard
+            icon={Footprints}
+            label="Steps"
+            value={a.steps != null ? Math.round(a.steps) : '--'}
+            accent="var(--steps)"
+            gradFrom="var(--steps-grad-from)"
+            gradTo="var(--steps-grad-to)"
+            series={series(days, (d) => d.activity.steps)}
+            onClick={() => onOpenDetail('steps', selectedIndex)}
+          />
+          <MetricCard
+            icon={Flame}
+            label="Active cal"
+            value={a.activeEnergy != null ? Math.round(a.activeEnergy) : '--'}
+            unit="kcal"
+            accent="var(--move)"
+            gradFrom="var(--move-grad-from)"
+            gradTo="var(--move-grad-to)"
+            series={series(days, (d) => d.activity.activeEnergy)}
+            onClick={() => onOpenDetail('activeEnergy', selectedIndex)}
+          />
+        </div>
       </div>
 
       <SectionLabel
