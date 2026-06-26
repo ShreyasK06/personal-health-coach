@@ -12,6 +12,7 @@ import { GradientHero } from '../components/GradientHero'
 import { SectionLabel } from '../components/SectionLabel'
 import { MetricCard } from '../components/MetricCard'
 import { DateNav } from '../components/DateNav'
+import { Heatmap } from '../components/Heatmap'
 import { series, longDate } from '../lib/uiHelpers'
 
 export function Activity({
@@ -46,7 +47,7 @@ export function Activity({
         />
       </GradientHero>
 
-      <div className="my-4 flex flex-col items-center gap-4">
+      <div className="glow-move glass my-4 flex flex-col items-center gap-4 px-4 py-6">
         <ActivityRings
           move={move}
           moveGoal={ACTIVITY_GOALS.moveKcal}
@@ -154,9 +155,9 @@ export function Activity({
           label="Distance"
           value={a.distanceKm != null ? a.distanceKm.toFixed(1) : '--'}
           unit="km"
-          accent="var(--sleep)"
-          gradFrom="var(--sleep-grad-from)"
-          gradTo="var(--sleep-grad-to)"
+          accent="var(--distance)"
+          gradFrom="var(--distance-grad-from)"
+          gradTo="var(--distance-grad-to)"
           series={series(days, (d) => d.activity.distanceKm)}
           onClick={() => onOpenDetail('distanceKm', selectedIndex)}
         />
@@ -164,11 +165,20 @@ export function Activity({
           icon={ArrowUpToLine}
           label="Flights"
           value={a.flights != null ? Math.round(a.flights) : '--'}
-          accent="var(--gold)"
-          gradFrom="var(--gold-grad-from)"
-          gradTo="var(--gold-grad-to)"
+          accent="var(--flights)"
+          gradFrom="var(--flights-grad-from)"
+          gradTo="var(--flights-grad-to)"
           series={series(days, (d) => d.activity.flights)}
           onClick={() => onOpenDetail('flights', selectedIndex)}
+        />
+      </div>
+
+      <SectionLabel>Steps history</SectionLabel>
+      <div className="glass p-4">
+        <Heatmap
+          values={series(days, (d) => d.activity.steps, days.length)}
+          dates={days.map((d) => d.date)}
+          color="var(--steps)"
         />
       </div>
     </div>

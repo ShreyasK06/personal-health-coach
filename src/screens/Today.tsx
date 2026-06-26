@@ -90,7 +90,7 @@ export function Today({
       </div>
 
       <SectionLabel>Move</SectionLabel>
-      <div className="flex flex-col items-center gap-3 rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="glow-move glass flex flex-col items-center gap-3 p-4">
         <ActivityRings
           move={a.activeEnergy ?? 0}
           moveGoal={ACTIVITY_GOALS.moveKcal}
@@ -136,8 +136,7 @@ export function Today({
       <button
         type="button"
         onClick={() => onOpenDetail('load', selectedIndex)}
-        className="flex flex-col gap-2 rounded-[18px] border p-4 text-left transition-colors"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+        className="glass flex flex-col gap-2 p-4 text-left transition-colors"
       >
         <div className="flex items-center justify-between gap-3">
           <span className="font-display text-lg font-black" style={{ color: readinessColor }}>
@@ -151,10 +150,7 @@ export function Today({
       </button>
 
       <SectionLabel>Strain</SectionLabel>
-      <div
-        className="flex flex-col items-center rounded-[18px] border px-4 py-6"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-      >
+      <div className="glow-gold glass flex flex-col items-center px-4 py-6">
         <Gauge
           value={day.strain.strain}
           max={STRAIN_MAX}

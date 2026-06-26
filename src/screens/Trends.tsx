@@ -104,8 +104,8 @@ export function Trends({
               key={t.label}
               type="button"
               onClick={() => onOpenDetail(t.kind, latestIndex)}
-              className="w-full rounded-[18px] border p-4 text-left transition-colors"
-              style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+              className="glass w-full p-4 text-left transition-colors"
+              style={{ boxShadow: `0 0 20px -8px color-mix(in srgb, ${t.color} 50%, transparent)` }}
             >
               <div className="mb-3 flex items-start justify-between">
                 <div>
@@ -145,7 +145,7 @@ export function Trends({
       </div>
 
       <SectionLabel>Recovery history</SectionLabel>
-      <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="glow-exercise glass p-4">
         <Heatmap values={recoveryValues} dates={dates} color="var(--rec-high)" />
       </div>
     </div>

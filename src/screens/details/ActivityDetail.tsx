@@ -80,18 +80,18 @@ const SPECS: Record<ActivityMetric, MetricSpec> = {
   distanceKm: {
     label: 'Distance',
     unit: 'km',
-    color: 'var(--sleep)',
-    gradFrom: 'var(--sleep-grad-from)',
-    gradTo: 'var(--sleep-grad-to)',
+    color: 'var(--distance)',
+    gradFrom: 'var(--distance-grad-from)',
+    gradTo: 'var(--distance-grad-to)',
     chart: 'area',
     decimals: 1,
     pick: (d) => d.activity.distanceKm,
   },
   flights: {
     label: 'Flights',
-    color: 'var(--gold)',
-    gradFrom: 'var(--gold-grad-from)',
-    gradTo: 'var(--gold-grad-to)',
+    color: 'var(--flights)',
+    gradFrom: 'var(--flights-grad-from)',
+    gradTo: 'var(--flights-grad-to)',
     chart: 'bar',
     decimals: 0,
     pick: (d) => d.activity.flights,
@@ -121,8 +121,8 @@ export function ActivityDetail({ days, index, metric }: { days: DayView[]; index
   return (
     <div className="flex flex-col">
       <div
-        className="flex flex-col items-center gap-1 rounded-[18px] border p-6 text-center"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+        className="glass flex flex-col items-center gap-1 p-6 text-center"
+        style={{ boxShadow: `0 0 28px -6px color-mix(in srgb, ${spec.color} 50%, transparent)` }}
       >
         <span className="section-label" style={{ color: spec.color }}>
           {spec.label}
@@ -161,39 +161,39 @@ export function ActivityDetail({ days, index, metric }: { days: DayView[]; index
       )}
 
       <SectionLabel>History</SectionLabel>
-      <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+      <div className="glass p-4">
         <Heatmap values={values} dates={dates} color={spec.color} />
       </div>
 
       <SectionLabel>Summary</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <div className="glass p-4">
           <span className="section-label">Today</span>
           <div className="font-display tabnum mt-2 text-[24px] font-black" style={{ color: 'var(--text)' }}>
             {formatStat(today, spec.decimals)}
           </div>
         </div>
-        <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <div className="glass p-4">
           <span className="section-label">7-day avg</span>
           <div className="font-display tabnum mt-2 text-[24px] font-black" style={{ color: 'var(--text)' }}>
             {formatStat(avg7, spec.decimals)}
           </div>
         </div>
-        <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <div className="glass p-4">
           <span className="section-label">30-day total</span>
           <div className="font-display tabnum mt-2 text-[24px] font-black" style={{ color: 'var(--text)' }}>
             {formatStat(total30, spec.decimals)}
           </div>
         </div>
-        <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <div className="glass p-4">
           <span className="section-label">30-day avg</span>
           <div className="font-display tabnum mt-2 text-[24px] font-black" style={{ color: 'var(--text)' }}>
             {formatStat(avg30, spec.decimals)}
           </div>
         </div>
         <div
-          className="col-span-2 rounded-[18px] border p-4"
-          style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
+          className="glass col-span-2 p-4"
+          style={{ boxShadow: `0 0 24px -6px color-mix(in srgb, ${spec.color} 45%, transparent)` }}
         >
           <span className="section-label" style={{ color: spec.color }}>
             Best day

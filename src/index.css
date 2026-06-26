@@ -45,6 +45,12 @@
   --steps: #FFB020;
   --steps-grad-from: #E8901A;
   --steps-grad-to: #FFC658;
+  --distance: #A78BFA;
+  --distance-grad-from: #8B6CF1;
+  --distance-grad-to: #C7B6FC;
+  --flights: #FB7185;
+  --flights-grad-from: #F0526A;
+  --flights-grad-to: #FCA5AF;
 
   /* Gradient pairs for existing metric tokens (recovery/strain/sleep/gold). */
   --rec-low-grad-from: #C93A31;
@@ -135,6 +141,14 @@ body {
 
 .glow-sleep {
   box-shadow: 0 0 24px -4px color-mix(in srgb, var(--sleep) 55%, transparent);
+}
+
+.glow-distance {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--distance) 55%, transparent);
+}
+
+.glow-flights {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--flights) 55%, transparent);
 }
 
 /* Translucent glass surface: used for premium overlay cards / chrome that
