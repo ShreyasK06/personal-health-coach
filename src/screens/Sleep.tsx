@@ -6,6 +6,8 @@
 // Gauge opens the in-depth Sleep detail sheet via onOpenDetail.
 import type { DayView, DetailKind } from '../lib/firebase'
 import { Gauge } from '../components/Gauge'
+import { GradientHero } from '../components/GradientHero'
+import { AreaChart } from '../components/AreaChart'
 import { SectionLabel } from '../components/SectionLabel'
 import { StatePill } from '../components/StatePill'
 import { DateNav } from '../components/DateNav'
@@ -55,16 +57,12 @@ export function Sleep({
   const wake = clockOf(day.wakeTime)
   const efficiencyPct = sleep ? Math.round(sleep.efficiency * 100) : null
 
+  const scoreValues = days.map((d) => d.sleep?.score ?? null)
+  const dates = days.map((d) => d.date)
+
   return (
     <div className="animate-fade-up flex flex-col">
-      <header className="mb-2 flex flex-col">
-        <h1 className="font-display text-[34px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>
-          Sleep
-        </h1>
-        <p className="mt-0.5 text-sm" style={{ color: 'var(--text-mut)' }}>
-          {isLatest ? 'Last night, ' : ''}
-          {longDate(day.date)}
-        </p>
+      <GradientHero title="Sleep" subtitle={`${isLatest ? 'Last night, ' : ''}${longDate(day.date)}`}>
         <DateNav
           date={day.date}
           isLatest={isLatest}
@@ -73,13 +71,10 @@ export function Sleep({
           onBack={() => onSelectIndex(Math.max(0, selectedIndex - 1))}
           onForward={() => onSelectIndex(Math.min(days.length - 1, selectedIndex + 1))}
         />
-      </header>
+      </GradientHero>
 
       <SectionLabel>Sleep performance</SectionLabel>
-      <div
-        className="flex flex-col items-center rounded-[18px] border px-4 py-6"
-        style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-      >
+      <div className="glow-sleep glass flex flex-col items-center px-4 py-6">
         {sleep ? (
           <Gauge
             value={sleep.score}
@@ -101,10 +96,7 @@ export function Sleep({
         <>
           <SectionLabel>Schedule</SectionLabel>
           <div className="grid grid-cols-2 gap-3">
-            <div
-              className="rounded-[18px] border p-4"
-              style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-            >
+            <div className="glass p-4">
               <span className="section-label" style={{ color: 'var(--sleep)' }}>
                 Asleep
               </span>
@@ -112,10 +104,7 @@ export function Sleep({
                 {asleep ?? '--'}
               </div>
             </div>
-            <div
-              className="rounded-[18px] border p-4"
-              style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-            >
+            <div className="glass p-4">
               <span className="section-label" style={{ color: 'var(--gold)' }}>
                 Wake
               </span>
@@ -126,10 +115,7 @@ export function Sleep({
           </div>
 
           <SectionLabel right={`${hoursMinutes(day.asleepMinutes)} asleep`}>Stage breakdown</SectionLabel>
-          <div
-            className="rounded-[18px] border p-4"
-            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-          >
+          <div className="glass p-4">
             <div className="flex h-3 w-full overflow-hidden rounded-full" style={{ background: 'var(--surface-2)' }}>
               {total > 0 &&
                 stageValues.map((s) =>
@@ -154,10 +140,7 @@ export function Sleep({
           </div>
 
           <SectionLabel>Efficiency</SectionLabel>
-          <div
-            className="flex items-center justify-between rounded-[18px] border p-4"
-            style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
-          >
+          <div className="glass flex items-center justify-between p-4">
             <div className="flex items-baseline gap-1.5">
               <span className="font-display tabnum text-[32px] font-black" style={{ color: 'var(--text)' }}>
                 {efficiencyPct ?? '--'}
@@ -171,6 +154,18 @@ export function Sleep({
                 {efficiencyPct >= 90 ? 'Solid' : efficiencyPct >= 80 ? 'Good' : 'Restless'}
               </StatePill>
             )}
+          </div>
+
+          <SectionLabel>Sleep score trend</SectionLabel>
+          <div className="glass p-4">
+            <AreaChart
+              values={scoreValues}
+              dates={dates}
+              color="var(--sleep)"
+              gradFrom="var(--sleep-grad-from)"
+              gradTo="var(--sleep-grad-to)"
+              unit="of 100"
+            />
           </div>
         </>
       )}

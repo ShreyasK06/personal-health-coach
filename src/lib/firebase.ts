@@ -8,7 +8,21 @@ import type { DailyResult } from './healthExport'
 export const FIREBASE_DB_URL = 'https://health-coach-76bf2-default-rtdb.firebaseio.com'
 
 /** Identifies which "in-depth detail" sheet to open for a tapped metric. */
-export type DetailKind = 'recovery' | 'sleep' | 'strain' | 'load' | 'hrv' | 'rhr' | 'respiratory'
+export type DetailKind =
+  | 'recovery'
+  | 'sleep'
+  | 'strain'
+  | 'load'
+  | 'hrv'
+  | 'rhr'
+  | 'respiratory'
+  | 'steps'
+  | 'activeEnergy'
+  | 'totalEnergy'
+  | 'exerciseMinutes'
+  | 'standHours'
+  | 'distanceKm'
+  | 'flights'
 
 /** Per-day Apple activity metrics (steps, calories, exercise, stand, distance, etc.). */
 export interface ActivityDay {

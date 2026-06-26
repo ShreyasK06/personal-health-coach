@@ -4,12 +4,16 @@
 // tapping a card opens that metric's in-depth detail sheet at the latest day.
 // Reads the days array passed by App.
 import type { DayView, DetailKind } from '../lib/firebase'
-import { Sparkline } from '../components/Sparkline'
+import { GradientHero } from '../components/GradientHero'
+import { AreaChart } from '../components/AreaChart'
+import { Heatmap } from '../components/Heatmap'
 import { SectionLabel } from '../components/SectionLabel'
 
 interface TrendDef {
   label: string
   color: string
+  gradFrom: string
+  gradTo: string
   unit: string
   pick: (d: DayView) => number | null
   decimals: number
@@ -17,10 +21,46 @@ interface TrendDef {
 }
 
 const TRENDS: TrendDef[] = [
-  { label: 'Recovery', color: 'var(--rec-high)', unit: 'of 100', pick: (d) => d.recovery?.score ?? null, decimals: 0, kind: 'recovery' },
-  { label: 'Strain', color: 'var(--strain)', unit: 'of 21', pick: (d) => d.strain.strain, decimals: 1, kind: 'strain' },
-  { label: 'Sleep', color: 'var(--sleep)', unit: 'of 100', pick: (d) => d.sleep?.score ?? null, decimals: 0, kind: 'sleep' },
-  { label: 'HRV', color: 'var(--gold)', unit: 'ms', pick: (d) => d.hrvMs, decimals: 0, kind: 'hrv' },
+  {
+    label: 'Recovery',
+    color: 'var(--rec-high)',
+    gradFrom: 'var(--rec-high-grad-from)',
+    gradTo: 'var(--rec-high-grad-to)',
+    unit: 'of 100',
+    pick: (d) => d.recovery?.score ?? null,
+    decimals: 0,
+    kind: 'recovery',
+  },
+  {
+    label: 'Strain',
+    color: 'var(--strain)',
+    gradFrom: 'var(--strain-grad-from)',
+    gradTo: 'var(--strain-grad-to)',
+    unit: 'of 21',
+    pick: (d) => d.strain.strain,
+    decimals: 1,
+    kind: 'strain',
+  },
+  {
+    label: 'Sleep',
+    color: 'var(--sleep)',
+    gradFrom: 'var(--sleep-grad-from)',
+    gradTo: 'var(--sleep-grad-to)',
+    unit: 'of 100',
+    pick: (d) => d.sleep?.score ?? null,
+    decimals: 0,
+    kind: 'sleep',
+  },
+  {
+    label: 'HRV',
+    color: 'var(--gold)',
+    gradFrom: 'var(--gold-grad-from)',
+    gradTo: 'var(--gold-grad-to)',
+    unit: 'ms',
+    pick: (d) => d.hrvMs,
+    decimals: 0,
+    kind: 'hrv',
+  },
 ]
 
 function avg(values: (number | null)[]): number | null {
@@ -46,17 +86,12 @@ export function Trends({
 }) {
   const span = days.length
   const latestIndex = days.length - 1
+  const dates = days.map((d) => d.date)
+  const recoveryValues = days.map((d) => d.recovery?.score ?? null)
 
   return (
     <div className="animate-fade-up flex flex-col">
-      <header className="mb-2">
-        <h1 className="font-display text-[34px] font-extrabold leading-tight" style={{ color: 'var(--text)' }}>
-          Trends
-        </h1>
-        <p className="mt-0.5 text-sm" style={{ color: 'var(--text-mut)' }}>
-          Last {span} {span === 1 ? 'day' : 'days'} of data
-        </p>
-      </header>
+      <GradientHero title="Trends" subtitle={`Last ${span} ${span === 1 ? 'day' : 'days'} of data`} />
 
       <SectionLabel>History</SectionLabel>
       <div className="flex flex-col gap-3">
@@ -96,10 +131,22 @@ export function Trends({
                   </div>
                 </div>
               </div>
-              <Sparkline values={values} color={t.color} width={388} height={64} strokeWidth={2.2} />
+              <AreaChart
+                values={values}
+                dates={dates}
+                color={t.color}
+                gradFrom={t.gradFrom}
+                gradTo={t.gradTo}
+                unit={t.unit}
+              />
             </button>
           )
         })}
+      </div>
+
+      <SectionLabel>Recovery history</SectionLabel>
+      <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>
+        <Heatmap values={recoveryValues} dates={dates} color="var(--rec-high)" />
       </div>
     </div>
   )
