@@ -4,7 +4,7 @@
 // summary, sleep-architecture stage breakdowns, and short plain-language
 // guidance. No I/O, no engine logic — consumed by the detail-view UI.
 import type { DayView } from './firebase'
-import { rollingBaseline } from '../metrics/baseline'
+import { rollingBaseline, mean } from '../metrics/baseline'
 import { RECOVERY_WEIGHTS } from '../metrics/recovery'
 
 const FLAT_Z_THRESHOLD = 0.25
@@ -267,21 +267,33 @@ export function readiness(days: DayView[], i: number): Readiness {
       tone = 'positive'
       note = 'No overnight recovery reading today. Train to feel.'
     }
-  } else if (band === 'green' && acwrOk) {
-    headline = 'Primed'
-    tone = 'positive'
-    note = 'Your recovery is strong and your training load is well balanced. Good day to push.'
   } else if (band === 'red' && (acwrHighRisk || monotonyHigh)) {
     headline = 'Run down'
     tone = 'critical'
     note = 'Recovery is low and your training load is elevated. Prioritize rest and easy movement today.'
-  } else if (band === 'red' || acwrHighRisk) {
+  } else if (acwrHighRisk) {
+    // High injury-risk ACWR caps the headline at "Strained" regardless of how
+    // green recovery looks — load risk can't be overridden by recovery alone.
     headline = 'Strained'
     tone = 'warning'
     note =
       band === 'red'
         ? 'Recovery is low today, so favor an easy session and protect tonight\'s sleep.'
-        : 'Your training load is ramping up faster than your body has adapted to. Consider an easier day.'
+        : 'Your training load is ramping up faster than your body has adapted to, even though recovery looks good. Consider an easier day.'
+  } else if (band === 'red') {
+    headline = 'Strained'
+    tone = 'warning'
+    note = 'Recovery is low today, so favor an easy session and protect tonight\'s sleep.'
+  } else if (band === 'green' && acwrOk && !monotonyHigh) {
+    headline = 'Primed'
+    tone = 'positive'
+    note = 'Your recovery is strong and your training load is well balanced. Good day to push.'
+  } else if (monotonyHigh) {
+    // High monotony erodes an otherwise-good "Primed" call: even with green
+    // recovery, repetitive training without variation caps at "Balanced".
+    headline = 'Balanced'
+    tone = 'warning'
+    note = 'Recovery looks good, but your training has been very repetitive lately. Add some variety to reduce injury risk.'
   } else {
     headline = 'Balanced'
     tone = 'sleep'
@@ -430,4 +442,178 @@ export function guidanceFor(kind: 'recovery' | 'sleep' | 'strain' | 'load', days
       ? ` Your training has also been quite repetitive lately (monotony ${round1(monotony)}); adding variety can reduce injury risk.`
       : ''
   return `${acwrSentence}${monotonySentence}`
+}
+
+// ---------------------------------------------------------------------------
+// 6. HRV trend
+// ---------------------------------------------------------------------------
+
+export interface HrvTrend {
+  direction: 'rising' | 'falling' | 'steady'
+  slopePerDay: number
+  changePct: number
+}
+
+const HRV_TREND_FLAT_PCT = 5
+
+/** Least-squares linear trend of HRV over the `window` days ending at index
+ * `i` (inclusive). Null days are skipped (x stays the day's offset so gaps
+ * don't distort the slope). Returns a zero trend if fewer than 2 HRV
+ * readings are available in the window. */
+export function hrvTrend(days: DayView[], i: number, window = 7): HrvTrend {
+  const start = Math.max(0, i - window + 1)
+  const xs: number[] = []
+  const ys: number[] = []
+  for (let k = start; k <= i; k++) {
+    const v = days[k].hrvMs
+    if (v != null) {
+      xs.push(k - start)
+      ys.push(v)
+    }
+  }
+
+  if (xs.length < 2) {
+    return { direction: 'steady', slopePerDay: 0, changePct: 0 }
+  }
+
+  const n = xs.length
+  const xMean = mean(xs)
+  const yMean = mean(ys)
+  let num = 0
+  let den = 0
+  for (let k = 0; k < n; k++) {
+    num += (xs[k] - xMean) * (ys[k] - yMean)
+    den += (xs[k] - xMean) ** 2
+  }
+  const slope = den === 0 ? 0 : num / den
+
+  const firstY = ys[0]
+  const changePct = firstY === 0 ? 0 : ((slope * (xs[n - 1] - xs[0])) / Math.abs(firstY)) * 100
+
+  const direction: HrvTrend['direction'] =
+    Math.abs(changePct) < HRV_TREND_FLAT_PCT ? 'steady' : changePct > 0 ? 'rising' : 'falling'
+
+  return { direction, slopePerDay: slope, changePct }
+}
+
+// ---------------------------------------------------------------------------
+// 7. Weekly load
+// ---------------------------------------------------------------------------
+
+export interface WeeklyLoad {
+  thisWeek: number
+  lastWeek: number
+  changePct: number
+  direction: 'up' | 'down' | 'flat'
+}
+
+const WEEKLY_LOAD_FLAT_PCT = 5
+
+/** Sums `strain.dayTrimp` over the 7 days ending at index `i` (inclusive) vs
+ * the prior 7 days. Days before the start of the array are simply excluded
+ * from the sum (no negative indices). */
+export function weeklyLoad(days: DayView[], i: number): WeeklyLoad {
+  const sumRange = (endInclusive: number, count: number): number => {
+    const start = Math.max(0, endInclusive - count + 1)
+    let sum = 0
+    for (let k = start; k <= endInclusive && k <= i; k++) {
+      if (k < 0) continue
+      sum += days[k]?.strain?.dayTrimp ?? 0
+    }
+    return sum
+  }
+
+  const thisWeek = sumRange(i, 7)
+  const lastWeek = sumRange(i - 7, 7)
+
+  const changePct = lastWeek === 0 ? (thisWeek === 0 ? 0 : 100) : ((thisWeek - lastWeek) / lastWeek) * 100
+  const direction: WeeklyLoad['direction'] =
+    Math.abs(changePct) < WEEKLY_LOAD_FLAT_PCT ? 'flat' : changePct > 0 ? 'up' : 'down'
+
+  return { thisWeek, lastWeek, changePct, direction }
+}
+
+// ---------------------------------------------------------------------------
+// 8. Metric delta (day-over-day)
+// ---------------------------------------------------------------------------
+
+export interface MetricDelta {
+  abs: number
+  pct: number
+  direction: 'up' | 'down' | 'flat'
+}
+
+const METRIC_DELTA_FLAT_PCT = 1
+
+/** Compares day `i`'s value (from `pick`) against the most recent prior day
+ * (k < i) with a non-null value. Returns null if today's value is null or no
+ * prior non-null value exists. */
+export function metricDelta(days: DayView[], i: number, pick: (d: DayView) => number | null): MetricDelta | null {
+  const today = days[i] != null ? pick(days[i]) : null
+  if (today == null) return null
+
+  let prior: number | null = null
+  for (let k = i - 1; k >= 0; k--) {
+    const v = pick(days[k])
+    if (v != null) {
+      prior = v
+      break
+    }
+  }
+  if (prior == null) return null
+
+  const abs = today - prior
+  const pct = prior === 0 ? (abs === 0 ? 0 : 100) : (abs / Math.abs(prior)) * 100
+  const direction: MetricDelta['direction'] =
+    Math.abs(pct) < METRIC_DELTA_FLAT_PCT ? 'flat' : abs > 0 ? 'up' : 'down'
+
+  return { abs, pct, direction }
+}
+
+// ---------------------------------------------------------------------------
+// 9. Calibration
+// ---------------------------------------------------------------------------
+
+export interface Calibration {
+  level: 'building' | 'calibrating' | 'dialed'
+  daysOfData: number
+  label: string
+}
+
+/** Counts days up to and including index `i` that have any recovery or HRV
+ * reading, and classifies how "calibrated" the user's baseline is. */
+export function calibration(days: DayView[], i: number): Calibration {
+  let daysOfData = 0
+  for (let k = 0; k <= i && k < days.length; k++) {
+    const day = days[k]
+    if (day?.recovery != null || day?.hrvMs != null) daysOfData++
+  }
+
+  if (daysOfData < 7) {
+    return { level: 'building', daysOfData, label: 'Still learning your baseline' }
+  }
+  if (daysOfData <= 20) {
+    return { level: 'calibrating', daysOfData, label: `Calibrating, ~${daysOfData} days in` }
+  }
+  return { level: 'dialed', daysOfData, label: 'Baseline dialed in' }
+}
+
+// ---------------------------------------------------------------------------
+// 10. Intensity target
+// ---------------------------------------------------------------------------
+
+export interface IntensityTarget {
+  zone: string
+  note: string
+}
+
+/** Suggests a training intensity zone from the day's recovery band. Returns
+ * null when there is no overnight recovery reading to base it on. */
+export function intensityTarget(day: DayView): IntensityTarget | null {
+  const band = day.recovery?.band ?? null
+  if (band == null) return null
+
+  if (band === 'green') return { zone: 'Zone 4-5', note: 'Zone 4-5 ok, push hard' }
+  if (band === 'amber') return { zone: 'Zone 2-3', note: 'Zone 2-3, train to feel' }
+  return { zone: 'Zone 1-2', note: 'Zone 1-2, keep it easy' }
 }
