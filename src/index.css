@@ -5,16 +5,26 @@
 :root {
   color-scheme: dark;
 
-  /* Titanium dark palette (Noop / WHOOP-style) */
-  --bg: #0F1318;            /* near-black cool charcoal canvas */
-  --surface: #181D24;       /* raised card fill */
-  --surface-2: #20262E;     /* inset / hover / segmented track */
-  --border: #262E39;        /* subtle 1px hairline */
-  --border-strong: #313B49;
+  /* Organized, opaque dark palette (moved away from the Noop/WHOOP minimal
+     look: solid cards instead of blurred glass, a dedicated chrome accent
+     instead of gold-everywhere, a subtle radial wash instead of flat
+     charcoal). */
+  --bg: #0F1318;            /* near-black cool charcoal canvas (radial wash applied on body) */
+  --surface: #1B212A;       /* raised card fill -- lighter/cooler than before so cards read as clearly raised */
+  --surface-2: #232B35;     /* inset / hover / segmented track */
+  --border: #2A323D;        /* subtle 1px hairline */
+  --border-strong: #38424F;
   --text: #F4F6F8;          /* primary */
   --text-dim: #C7CFD9;      /* secondary */
   --text-mut: #8A94A4;      /* tertiary / labels */
-  --gold: #E8B84B;          /* accent: labels, the + button, brand */
+
+  /* Chrome accent: nav-active, refresh "+" button, focus rings, brand
+     wordmark. A refined teal-cyan that doesn't collide with any metric
+     color below. Gold is retired from chrome and kept only as the HRV
+     metric color. */
+  --accent: #4FD1C5;
+  --accent-deep: #2BA89C;
+  --gold: #E8B84B;          /* now used ONLY as the HRV metric color */
   --gold-deep: #C8902F;
   --rec-low: #E0463C;       /* recovery red  (score < 34) */
   --rec-mid: #F2C53D;       /* recovery yellow (34-66) */
@@ -65,6 +75,11 @@
   --sleep-grad-to: #7DB6F0;
   --gold-grad-from: var(--gold-deep);
   --gold-grad-to: #F7D27E;
+  --accent-grad-from: var(--accent-deep);
+  --accent-grad-to: #8FE9DF;
+
+  /* Card radius (foundation token; primitives use this directly). */
+  --radius-card: 20px;
 }
 
 html,
@@ -75,7 +90,11 @@ body,
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(120% 90% at 20% -10%, color-mix(in srgb, var(--accent) 7%, transparent) 0%, transparent 55%),
+    radial-gradient(110% 100% at 100% 110%, color-mix(in srgb, var(--gold) 5%, transparent) 0%, transparent 60%),
+    var(--bg);
+  background-attachment: fixed;
   color: var(--text);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -83,8 +102,8 @@ body {
 }
 
 .font-display {
-  font-family: 'Inter', system-ui, sans-serif;
-  letter-spacing: -0.02em;
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 /* Heavy tabular numerals for the big metric numbers */
@@ -97,8 +116,48 @@ body {
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   color: var(--text-mut);
+}
+
+/* Type scale: display sizes are Space Grotesk (headings/big numbers), body
+   and label sizes are Inter (body/labels). Spacing is on a 4px scale. */
+.text-display-lg {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.text-display-md {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.text-display-sm {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.text-body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.text-label {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 * {
@@ -120,9 +179,14 @@ body {
   animation: fadeUp 0.5s ease both;
 }
 
-/* Glow shadow utilities, tinted to each metric color at low alpha. Used by
-   the activity rings, metric cards, and gradient accents in the richer
-   visual library. */
+/* Glow shadow utilities, tinted to each metric color at low alpha. Trimmed
+   to a single consistent treatment (24px spread, 40% mix) -- used by the
+   activity rings, metric cards, and gradient accents in the richer visual
+   library. Prefer these over ad-hoc inline boxShadow/color-mix duplicates. */
+.glow-accent {
+  box-shadow: 0 0 24px -4px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
 .glow-move {
   box-shadow: 0 0 24px -4px color-mix(in srgb, var(--move) 55%, transparent);
 }
@@ -151,21 +215,21 @@ body {
   box-shadow: 0 0 24px -4px color-mix(in srgb, var(--flights) 55%, transparent);
 }
 
-/* Translucent glass surface: used for premium overlay cards / chrome that
-   should sit above the gradient hero wash. */
+/* Solid opaque card surface (no backdrop-blur -- the blurred-glass look was
+   the most Noop-coded signature, so cards are now a flat raised fill with a
+   hairline border). Kept as `.glass` so existing call sites keep compiling;
+   it now renders identically to a solid surface card. */
 .glass {
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-card);
 }
 
 /* Subtle dark gradient wash, suitable as a page-header background behind a
    GradientHero title block. */
 .hero-grad {
   background:
-    radial-gradient(120% 140% at 15% -10%, color-mix(in srgb, var(--gold) 16%, transparent) 0%, transparent 55%),
+    radial-gradient(120% 140% at 15% -10%, color-mix(in srgb, var(--accent) 14%, transparent) 0%, transparent 55%),
     linear-gradient(160deg, var(--surface) 0%, var(--bg) 70%);
 }
 

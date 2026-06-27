@@ -4,6 +4,9 @@
 import { useId, useMemo, useRef, useState } from 'react'
 import { shortDate } from '../lib/uiHelpers'
 import type { ChartBand } from './InteractiveChart'
+import { EmptyState } from './EmptyState'
+
+const MIN_POINTS = 3
 
 interface AreaChartProps {
   values: (number | null)[]
@@ -56,12 +59,23 @@ export function AreaChart({
   const sliceDates = dates.slice(n - windowSize)
 
   const present = sliceValues.filter((v): v is number => v != null && Number.isFinite(v))
-  const min = present.length ? Math.min(...present) : 0
-  const max = present.length ? Math.max(...present) : 1
-  const span = max - min || 1
-  const padAmt = span * 0.08
-  const yMin = min - padAmt
-  const yMax = max + padAmt
+
+  // Fix the y-domain to the bands' full range when bands are provided,
+  // instead of auto-zooming to the visible slice's min/max (see
+  // InteractiveChart.tsx for the full rationale -- same overlap bug fix).
+  let yMin: number
+  let yMax: number
+  if (bands && bands.length > 0) {
+    yMin = Math.min(...bands.map((b) => b.from))
+    yMax = Math.max(...bands.map((b) => b.to))
+  } else {
+    const min = present.length ? Math.min(...present) : 0
+    const max = present.length ? Math.max(...present) : 1
+    const span = max - min || 1
+    const padAmt = span * 0.08
+    yMin = min - padAmt
+    yMax = max + padAmt
+  }
   const ySpan = yMax - yMin || 1
 
   const width = 320
@@ -152,6 +166,10 @@ export function AreaChart({
   const readoutValue = activeIdx != null ? sliceValues[activeIdx] : null
   const gradId = `${uid}-area-grad`
   const hasFill = Boolean(gradFrom || gradTo)
+
+  if (present.length < MIN_POINTS) {
+    return <EmptyState message="Not enough history yet" />
+  }
 
   return (
     <div className="flex flex-col gap-3">
