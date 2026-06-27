@@ -90,7 +90,7 @@ export function Trends({
   const recoveryValues = days.map((d) => d.recovery?.score ?? null)
 
   return (
-    <div className="animate-fade-up flex flex-col">
+    <div className="animate-fade-up flex flex-col gap-6">
       <GradientHero title="Trends" subtitle={`Last ${span} ${span === 1 ? 'day' : 'days'} of data`} />
 
       <SectionLabel>History</SectionLabel>

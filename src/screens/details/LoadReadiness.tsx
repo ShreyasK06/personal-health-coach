@@ -39,7 +39,7 @@ export function LoadReadiness({ days, index }: { days: DayView[]; index: number 
   const markerColor = acwr > ACWR_SAFE_HIGH ? 'var(--critical)' : acwr < ACWR_SAFE_LOW ? 'var(--text-mut)' : 'var(--positive)'
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <div
         className="flex flex-col items-center gap-2 rounded-[18px] border p-6 text-center"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}

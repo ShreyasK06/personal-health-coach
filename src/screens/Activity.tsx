@@ -35,7 +35,7 @@ export function Activity({
   const stand = a.standHours ?? 0
 
   return (
-    <div className="animate-fade-up flex flex-col gap-1">
+    <div className="animate-fade-up flex flex-col gap-6">
       <GradientHero title="Activity" subtitle={longDate(day.date)}>
         <DateNav
           date={day.date}

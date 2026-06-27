@@ -119,7 +119,7 @@ export function ActivityDetail({ days, index, metric }: { days: DayView[]; index
   const best = present.length ? Math.max(...present) : null
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <div
         className="glass flex flex-col items-center gap-1 p-6 text-center"
         style={{ boxShadow: `0 0 28px -6px color-mix(in srgb, ${spec.color} 50%, transparent)` }}

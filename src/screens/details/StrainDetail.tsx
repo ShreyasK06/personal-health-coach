@@ -15,7 +15,7 @@ export function StrainDetail({ days, index }: { days: DayView[]; index: number }
   const sessions = day.strain.sessions
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <div
         className="flex flex-col items-center rounded-[18px] border px-4 py-6"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}
