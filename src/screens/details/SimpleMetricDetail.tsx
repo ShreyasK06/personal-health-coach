@@ -67,7 +67,7 @@ export function SimpleMetricDetail({
   const color = METRIC_COLOR[metric]
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <div
         className="flex flex-col items-center gap-1 rounded-[18px] border p-6 text-center"
         style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}

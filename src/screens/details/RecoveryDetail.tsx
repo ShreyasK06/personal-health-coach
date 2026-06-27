@@ -16,7 +16,7 @@ export function RecoveryDetail({ days, index }: { days: DayView[]; index: number
   const drivers = recoveryDrivers(days, index)
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <div className="flex justify-center">
         {rec ? (
           <RecoveryRing score={rec.score} band={rec.band} />

@@ -1,8 +1,33 @@
-// Dark rounded stat tile: a tiny uppercase gold label, a big bold tabular
+// Dark rounded stat tile: a tiny uppercase muted label, a big bold tabular
 // number with a muted unit, an optional state/delta pill, and a 14-day
 // sparkline along the bottom. Arranged in the Today screen's 2-column grid.
+//
+// `dayDelta` is a structured day-over-day delta (from `metricDelta()`); when
+// provided it renders as a formatted, direction-colored pill next to the
+// label, taking priority over the legacy free-form `pill` prop. Pass
+// `invert` for metrics where "up" should read as unfavorable.
 import { Sparkline } from './Sparkline'
 import { StatePill, type PillTone } from './StatePill'
+
+export interface StatTileDelta {
+  abs: number
+  pct: number
+  direction: 'up' | 'down' | 'flat'
+}
+
+const DELTA_TONE: Record<'up' | 'down' | 'flat', PillTone> = {
+  up: 'positive',
+  down: 'critical',
+  flat: 'neutral',
+}
+
+function formatDayDelta(d: StatTileDelta, invert: boolean): { text: string; tone: PillTone } {
+  if (d.direction === 'flat') return { text: '–', tone: 'neutral' }
+  const sign = d.abs > 0 ? '+' : '-'
+  const magnitude = Math.round(Math.abs(d.pct))
+  const effectiveDirection = invert ? (d.direction === 'up' ? 'down' : 'up') : d.direction
+  return { text: `${sign}${magnitude}%`, tone: DELTA_TONE[effectiveDirection] }
+}
 
 interface StatTileProps {
   label: string
@@ -11,6 +36,8 @@ interface StatTileProps {
   series?: (number | null)[]
   sparkColor?: string
   pill?: { text: string; tone: PillTone }
+  dayDelta?: StatTileDelta | null
+  invert?: boolean
   state?: string // small state word under the number
   stateColor?: string
   onClick?: () => void
@@ -21,13 +48,16 @@ export function StatTile({
   value,
   unit,
   series,
-  sparkColor = 'var(--gold)',
+  sparkColor = 'var(--accent)',
   pill,
+  dayDelta,
+  invert = false,
   state,
   stateColor = 'var(--text-mut)',
   onClick,
 }: StatTileProps) {
   const interactive = onClick != null
+  const formattedDayDelta = dayDelta != null ? formatDayDelta(dayDelta, invert) : null
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLDivElement>) {
     if (!onClick) return
@@ -65,13 +95,19 @@ export function StatTile({
       }
     >
       <div className="flex items-start justify-between">
-        <span className="section-label" style={{ color: 'var(--gold)' }}>
+        <span className="section-label" style={{ color: 'var(--text-mut)' }}>
           {label}
         </span>
-        {pill && (
-          <StatePill tone={pill.tone} dot={pill.tone === 'positive' || pill.tone === 'critical'}>
-            {pill.text}
+        {formattedDayDelta ? (
+          <StatePill tone={formattedDayDelta.tone} dot={formattedDayDelta.tone === 'positive' || formattedDayDelta.tone === 'critical'}>
+            {formattedDayDelta.text}
           </StatePill>
+        ) : (
+          pill && (
+            <StatePill tone={pill.tone} dot={pill.tone === 'positive' || pill.tone === 'critical'}>
+              {pill.text}
+            </StatePill>
+          )
         )}
       </div>
 

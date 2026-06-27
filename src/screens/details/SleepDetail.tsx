@@ -48,7 +48,7 @@ export function SleepDetail({ days, index }: { days: DayView[]; index: number })
   const consistencyPct = Math.round(sleep.consistency * 100)
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col gap-6">
       <SectionLabel>Need vs actual</SectionLabel>
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-[18px] border p-4" style={{ borderColor: 'var(--border)', background: 'var(--surface)' }}>

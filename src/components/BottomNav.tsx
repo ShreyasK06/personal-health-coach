@@ -1,11 +1,11 @@
 // Bottom tab bar fixed within the centered column: Today / Activity / Trends /
-// Sleep with a central circular gold "+" button that refreshes data from
-// Firebase. Active tab is gold, others muted. Rendered by AppShell; onTab
-// switches screens and onRefresh re-runs loadHealthData.
+// Sleep with a central circular teal "+" button that refreshes data from
+// Firebase. Active tab is teal (--accent), others muted. Rendered by AppShell;
+// onTab switches screens and onRefresh re-runs loadHealthData.
 export type TabId = 'today' | 'activity' | 'trends' | 'sleep'
 
 function TodayIcon({ active }: { active: boolean }) {
-  const c = active ? 'var(--gold)' : 'var(--text-mut)'
+  const c = active ? 'var(--accent)' : 'var(--text-mut)'
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <circle cx="12" cy="12" r="8.5" />
@@ -15,7 +15,7 @@ function TodayIcon({ active }: { active: boolean }) {
 }
 
 function ActivityIcon({ active }: { active: boolean }) {
-  const c = active ? 'var(--gold)' : 'var(--text-mut)'
+  const c = active ? 'var(--accent)' : 'var(--text-mut)'
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M3 12h4l2.5 7L13.5 5l2.5 7h5" strokeLinecap="round" strokeLinejoin="round" />
@@ -24,7 +24,7 @@ function ActivityIcon({ active }: { active: boolean }) {
 }
 
 function TrendsIcon({ active }: { active: boolean }) {
-  const c = active ? 'var(--gold)' : 'var(--text-mut)'
+  const c = active ? 'var(--accent)' : 'var(--text-mut)'
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M4 16l4-5 3 3 5-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -34,7 +34,7 @@ function TrendsIcon({ active }: { active: boolean }) {
 }
 
 function SleepIcon({ active }: { active: boolean }) {
-  const c = active ? 'var(--gold)' : 'var(--text-mut)'
+  const c = active ? 'var(--accent)' : 'var(--text-mut)'
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M20 13.5A8 8 0 1 1 10.5 4a6.5 6.5 0 0 0 9.5 9.5z" strokeLinecap="round" strokeLinejoin="round" />
@@ -84,9 +84,9 @@ export function BottomNav({
         aria-label="Refresh data from Firebase"
         className="-mt-7 flex h-14 w-14 shrink-0 items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
-          background: 'var(--gold)',
-          color: '#1A1304',
-          boxShadow: '0 6px 20px color-mix(in srgb, var(--gold) 40%, transparent)',
+          background: 'var(--accent)',
+          color: '#06201D',
+          boxShadow: '0 6px 20px color-mix(in srgb, var(--accent) 40%, transparent)',
         }}
       >
         <svg
@@ -132,7 +132,7 @@ function TabButton({
       type="button"
       onClick={onClick}
       className="flex flex-col items-center gap-1 px-3 py-1"
-      style={{ color: active ? 'var(--gold)' : 'var(--text-mut)' }}
+      style={{ color: active ? 'var(--accent)' : 'var(--text-mut)' }}
     >
       <Icon active={active} />
       <span className="text-[10px] font-semibold uppercase tracking-wide">{label}</span>
