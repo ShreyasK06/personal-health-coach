@@ -1,5 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import { recoveryDrivers, readiness, sleepArchitecture, sleepDebtHours, guidanceFor } from './detail'
+import {
+  recoveryDrivers,
+  readiness,
+  sleepArchitecture,
+  sleepDebtHours,
+  guidanceFor,
+  hrvTrend,
+  weeklyLoad,
+  metricDelta,
+  calibration,
+  intensityTarget,
+} from './detail'
 import type { DayView } from './firebase'
 
 // Builds a minimal synthetic DayView. Callers override only the fields they
@@ -14,7 +25,7 @@ function makeDay(overrides: Partial<DayView> & { date: string }): DayView {
       ({ score: 80, needHours: 8, performance: 0.9, efficiency: 0.9, consistency: 0.9, restorative: 0.9 } as DayView['sleep']),
     strain: overrides.strain ?? { sessions: [], dayTrimp: 0, strain: 0 },
     load: overrides.load ?? { acute: 100, chronic: 100, acwr: 1.0, monotony: 1.0, trainingStrain: 100, band: 'optimal' },
-    hrvMs: overrides.hrvMs ?? 60,
+    hrvMs: 'hrvMs' in overrides ? overrides.hrvMs! : 60,
     restingHr: overrides.restingHr ?? 55,
     respiratoryRate: overrides.respiratoryRate ?? 14,
     asleepMinutes: overrides.asleepMinutes ?? 420,
@@ -120,6 +131,44 @@ describe('readiness', () => {
     expect(r.headline).toBe('Primed')
     expect(r.tone).toBe('positive')
     expect(r.signals).toHaveLength(4)
+  })
+
+  it('caps headline at Strained for a green-recovery day with ACWR 1.8 (not Primed)', () => {
+    const days = [
+      makeDay({
+        date: '2026-06-11',
+        recovery: { score: 90, band: 'green', zHrv: 1.5, zRhr: -1.5, respPenalty: 0 },
+        load: { acute: 180, chronic: 100, acwr: 1.8, monotony: 1.0, trainingStrain: 180, band: 'high-risk' },
+      }),
+    ]
+    const r = readiness(days, 0)
+    expect(r.headline).not.toBe('Primed')
+    expect(r.headline).toBe('Strained')
+  })
+
+  it('caps headline at Balanced for a green-recovery, non-red day with high monotony', () => {
+    const days = [
+      makeDay({
+        date: '2026-06-11',
+        recovery: { score: 90, band: 'green', zHrv: 1.5, zRhr: -1.5, respPenalty: 0 },
+        load: { acute: 100, chronic: 100, acwr: 1.0, monotony: 2.5, trainingStrain: 250, band: 'optimal' },
+      }),
+    ]
+    const r = readiness(days, 0)
+    expect(r.headline).not.toBe('Primed')
+    expect(r.headline).toBe('Balanced')
+  })
+
+  it('still returns Primed for a green-recovery day with ACWR ok and monotony low', () => {
+    const days = [
+      makeDay({
+        date: '2026-06-11',
+        recovery: { score: 90, band: 'green', zHrv: 1.5, zRhr: -1.5, respPenalty: 0 },
+        load: { acute: 100, chronic: 100, acwr: 1.0, monotony: 1.2, trainingStrain: 100, band: 'optimal' },
+      }),
+    ]
+    const r = readiness(days, 0)
+    expect(r.headline).toBe('Primed')
   })
 
   it('falls back to load-only signals when recovery is null', () => {
@@ -246,5 +295,164 @@ describe('guidanceFor', () => {
 
   it('returns a non-empty string for load', () => {
     expect(guidanceFor('load', days, i).length).toBeGreaterThan(0)
+  })
+})
+
+describe('hrvTrend', () => {
+  it('detects a rising trend on a steadily increasing HRV series', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-0${k + 1}`, hrvMs: 50 + k * 5 })) // 50..80
+    }
+    const trend = hrvTrend(days, days.length - 1, 7)
+    expect(trend.direction).toBe('rising')
+    expect(trend.slopePerDay).toBeGreaterThan(0)
+    expect(trend.changePct).toBeGreaterThan(0)
+  })
+
+  it('detects a falling trend on a steadily decreasing HRV series', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-0${k + 1}`, hrvMs: 80 - k * 5 })) // 80..50
+    }
+    const trend = hrvTrend(days, days.length - 1, 7)
+    expect(trend.direction).toBe('falling')
+    expect(trend.slopePerDay).toBeLessThan(0)
+    expect(trend.changePct).toBeLessThan(0)
+  })
+
+  it('returns steady for a flat HRV series', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-0${k + 1}`, hrvMs: 60 }))
+    }
+    const trend = hrvTrend(days, days.length - 1, 7)
+    expect(trend.direction).toBe('steady')
+  })
+
+  it('skips null days and still computes a trend, and handles <2 readings', () => {
+    const days: DayView[] = [
+      makeDay({ date: '2026-06-01', hrvMs: null }),
+      makeDay({ date: '2026-06-02', hrvMs: 50 }),
+    ]
+    const trend = hrvTrend(days, 1, 7)
+    // Only one non-null reading: not enough to compute a slope.
+    expect(trend.direction).toBe('steady')
+    expect(trend.slopePerDay).toBe(0)
+  })
+})
+
+describe('weeklyLoad', () => {
+  it('reports up when this week carries more strain than last week', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-0${k + 1}`, strain: { sessions: [], dayTrimp: 50, strain: 5 } }))
+    }
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-${k + 8}`, strain: { sessions: [], dayTrimp: 150, strain: 10 } }))
+    }
+    const result = weeklyLoad(days, days.length - 1)
+    expect(result.lastWeek).toBeCloseTo(350, 5)
+    expect(result.thisWeek).toBeCloseTo(1050, 5)
+    expect(result.direction).toBe('up')
+    expect(result.changePct).toBeGreaterThan(0)
+  })
+
+  it('reports down when this week carries less strain than last week', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-0${k + 1}`, strain: { sessions: [], dayTrimp: 150, strain: 10 } }))
+    }
+    for (let k = 0; k < 7; k++) {
+      days.push(makeDay({ date: `2026-06-${k + 8}`, strain: { sessions: [], dayTrimp: 50, strain: 5 } }))
+    }
+    const result = weeklyLoad(days, days.length - 1)
+    expect(result.direction).toBe('down')
+    expect(result.changePct).toBeLessThan(0)
+  })
+
+  it('reports flat when load is unchanged week over week', () => {
+    const days: DayView[] = []
+    for (let k = 0; k < 14; k++) {
+      days.push(makeDay({ date: `2026-06-${(k + 1).toString().padStart(2, '0')}`, strain: { sessions: [], dayTrimp: 100, strain: 8 } }))
+    }
+    const result = weeklyLoad(days, days.length - 1)
+    expect(result.direction).toBe('flat')
+  })
+})
+
+describe('metricDelta', () => {
+  it('computes a delta against the most recent prior non-null day', () => {
+    const days = [
+      makeDay({ date: '2026-06-01', hrvMs: 50 }),
+      makeDay({ date: '2026-06-02', hrvMs: null }),
+      makeDay({ date: '2026-06-03', hrvMs: 60 }),
+    ]
+    const delta = metricDelta(days, 2, (d) => d.hrvMs)
+    expect(delta).not.toBeNull()
+    expect(delta!.abs).toBeCloseTo(10, 5)
+    expect(delta!.pct).toBeCloseTo(20, 5)
+    expect(delta!.direction).toBe('up')
+  })
+
+  it('returns null when today is null', () => {
+    const days = [makeDay({ date: '2026-06-01', hrvMs: 50 }), makeDay({ date: '2026-06-02', hrvMs: null })]
+    expect(metricDelta(days, 1, (d) => d.hrvMs)).toBeNull()
+  })
+
+  it('returns null when there is no prior non-null value', () => {
+    const days = [makeDay({ date: '2026-06-01', hrvMs: null }), makeDay({ date: '2026-06-02', hrvMs: 50 })]
+    expect(metricDelta(days, 1, (d) => d.hrvMs)).toBeNull()
+  })
+
+  it('returns null for the first day (no prior day at all)', () => {
+    const days = [makeDay({ date: '2026-06-01', hrvMs: 50 })]
+    expect(metricDelta(days, 0, (d) => d.hrvMs)).toBeNull()
+  })
+})
+
+describe('calibration', () => {
+  it('returns building for fewer than 7 days of data', () => {
+    const days = priorDays(5)
+    const c = calibration(days, days.length - 1)
+    expect(c.level).toBe('building')
+    expect(c.daysOfData).toBe(5)
+  })
+
+  it('returns calibrating between 7 and 20 days of data', () => {
+    const days = priorDays(15)
+    const c = calibration(days, days.length - 1)
+    expect(c.level).toBe('calibrating')
+    expect(c.daysOfData).toBe(15)
+    expect(c.label).toContain('15')
+  })
+
+  it('returns dialed at 21+ days of data', () => {
+    const days = priorDays(25)
+    const c = calibration(days, days.length - 1)
+    expect(c.level).toBe('dialed')
+    expect(c.daysOfData).toBe(25)
+  })
+})
+
+describe('intensityTarget', () => {
+  it('suggests a hard zone for green recovery', () => {
+    const day = makeDay({ date: '2026-06-11', recovery: { score: 90, band: 'green', zHrv: 1, zRhr: -1, respPenalty: 0 } })
+    expect(intensityTarget(day)?.note).toContain('push hard')
+  })
+
+  it('suggests a moderate zone for amber recovery', () => {
+    const day = makeDay({ date: '2026-06-11', recovery: { score: 60, band: 'amber', zHrv: 0, zRhr: 0, respPenalty: 0 } })
+    expect(intensityTarget(day)?.note).toContain('train to feel')
+  })
+
+  it('suggests an easy zone for red recovery', () => {
+    const day = makeDay({ date: '2026-06-11', recovery: { score: 20, band: 'red', zHrv: -1, zRhr: 1, respPenalty: 0 } })
+    expect(intensityTarget(day)?.note).toContain('keep it easy')
+  })
+
+  it('returns null when there is no recovery reading', () => {
+    const day = makeDay({ date: '2026-06-11', recovery: null })
+    expect(intensityTarget(day)).toBeNull()
   })
 })
