@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-25",
+  "activity": {
+    "steps": 87.00000000000003,
+    "activeEnergy": 17.289900404234547,
+    "basalEnergy": 81.86236304385326,
+    "totalEnergy": 99.15226344808781,
+    "exerciseMinutes": null,
+    "standHours": 1,
+    "standMinutes": 1.0000000000000002,
+    "flights": 0.2650737688324861,
+    "distanceKm": 0.11944892644998666,
+    "physicalEffort": 3.412500025083621,
+    "avgHr": 65.84615384615384,
+    "maxHr": 73,
+    "noiseDb": 62.89692139105817
+  }
+}
