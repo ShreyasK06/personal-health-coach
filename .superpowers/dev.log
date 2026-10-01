@@ -1,0 +1,57 @@
+
+> app@0.0.0 dev
+> vite --port 5173 --strictPort
+
+
+  [32m[1mVITE[22m v8.0.16[39m  [2mready in [0m[1m1057[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m2:39:49 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22mIn HTML, <button> cannot be a descendant of <button>.
+This will cause a hydration error.
+
+  <App>
+    <AppShell active="trends" onTab={function bound dispatchSetState} onRefresh={function} refreshing={false}>
+      <div className="flex min-h..." style={{...}}>
+        <div className="relative f..." style={{...}}>
+          <main className="flex-1 px-...">
+            <Trends days={[...]} onOpenDetail={function}>
+              <div className="animate-fa...">
+                <GradientHero>
+                <SectionLabel>
+                <div className="flex flex-...">
+>                 <button
+>                   type="button"
+>                   onClick={function onClick}
+>                   className="glass w-full p-4 text-left transition-colors"
+>                   style={{boxShadow:"0 0 20px -..."}}
+>                 >
+                    <div>
+                    <AreaChart values={[...]} dates={[...]} color="var(--rec-..." gradFrom="var(--rec-..." ...>
+                      <div className="flex flex-...">
+                        <div>
+                        <svg>
+                        <div className="flex items...">
+>                         <button
+>                           type="button"
+>                           onClick={function onClick}
+>                           className="rounded-full px-3 py-1 text-xs font-semibold"
+>                           style={{color:"var(--text...",background:"transparent"}}
+>                         >
+                          ...
+                  ...
+                ...
+          ...
+
+[2m2:39:49 PM[22m [31m[1m[vite][22m[39m [31m[2m(client)[22m[39m [2m[console.error] [22m<button> cannot contain a nested <button>.
+See this log for the ancestor stack trace.
+[2m2:42:41 PM[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m2:42:41 PM[22m [36m[1m[vite][22m[39m server restarted.
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/personal-health-coach/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
+[2m2:43:08 PM[22m [36m[1m[vite][22m[39m [32mvite.config.ts changed, restarting server...[39m
+[2m2:43:08 PM[22m [36m[1m[vite][22m[39m server restarted.
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m5173[22m/[39m
+[2m  [32m➜[39m  [1mNetwork[22m[2m: use [22m[1m--host[22m[2m to expose[22m
