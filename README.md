@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# Personal Health Coach
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A single-user, Whoop-style dashboard built on Apple Watch / Apple Health data. It turns raw HRV, resting heart rate, sleep, workouts, and activity into daily **recovery**, **sleep**, **strain**, and **training-load** scores, scored against your own rolling baseline rather than population averages.
 
-Currently, two official plugins are available:
+Built with React 19, TypeScript, Vite, and Tailwind CSS. The scoring logic is written as pure, unit-tested functions, separate from the UI.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it shows
 
-## React Compiler
+- **Today:** recovery ring, a readiness banner (the lead signal), training load, strain gauge, and an at-a-glance grid (recovery, strain, sleep, HRV, steps, active calories, resting HR, respiratory rate) with day-over-day deltas.
+- **Sleep:** sleep score versus a computed sleep need, sleep stages, and sleep debt.
+- **Activity:** move / exercise / stand rings, an activity heatmap, and distance and flights charts.
+- **Trends:** charts across days, with a detail sheet for every metric that explains the drivers behind the number.
+- **Calibration banner:** shown while there isn't enough history to build a reliable baseline.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## The scoring engines (`src/metrics/`)
 
-## Expanding the ESLint configuration
+| Engine | What it computes |
+|---|---|
+| `recovery` | Recovery (0 to 100%) from overnight HRV and resting heart rate, as standardized deviations from a rolling baseline |
+| `sleep` | Sleep score (0 to 100) versus a personalized sleep need |
+| `strain` | Cardiovascular strain (0 to 21) from workout heart-rate data, relative to max heart rate |
+| `load` | Acute versus chronic training load and monotony, used to flag overtraining risk |
+| `baseline` | Rolling mean and standard deviation used by the other engines |
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Weights and constants are tunable defaults intended to be calibrated against real data. Coaching guidance (readiness downgrades, intensity targets, HRV trend) is derived deterministically from these outputs; there is no LLM in the current code.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Data
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+The app reads Health Auto Export JSON (the iOS app that exports Apple Health data) through `src/lib/parseHaeJson.ts` and loads it from a Firebase Realtime Database configured in `src/lib/firebase.ts`. There are also importers for CSV and ZIP exports (`csv.ts`, `loadZip.ts`, `healthExport.ts`).
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+**This repository contains no personal health data.** Treat health data as sensitive: restrict read access on whatever database you point the app at, and don't commit exports.
+
+## Getting started
+
+```bash
+npm install
+npm run dev        # local dev server
+npm test           # unit tests (Vitest)
+npm run build      # type-check and production build
+npm run lint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Point `src/lib/firebase.ts` at your own database before running.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Tests
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Vitest unit tests cover the CSV and JSON parsers, the export pipeline, and each scoring engine (recovery, sleep, strain, load, baseline).
+
+## Deployment
+
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the app and publishes it to GitHub Pages on pushes to `main`.
+
+## Project layout
+
 ```
+src/
+  metrics/       Scoring engines and their tests
+  lib/           Parsers, importers, data loading, UI helpers
+  components/    Rings, gauges, charts, cards, navigation
+  screens/       Today, Sleep, Activity, Trends, and detail sheets
+docs/
+  superpowers/   Design spec and implementation plan
+```
+
+## Status
+
+Active personal project. The original design (see `docs/superpowers/specs/`) also describes a Supabase ingest endpoint and an LLM-narrated coach; the current implementation instead loads data from Firebase and computes guidance deterministically.
