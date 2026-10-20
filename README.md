@@ -57,7 +57,7 @@ Vitest unit tests cover the CSV and JSON parsers, the export pipeline, and each 
 
 ## Deployment
 
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the app and publishes it to GitHub Pages on pushes to `main` or `master` (and on manual dispatch). In the repo settings, set Pages source to "GitHub Actions".
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the app and publishes it to GitHub Pages on pushes to `main`, `master` or `feat/plan-1-foundation` (the repo's default branch), and on manual dispatch. In the repo settings, set Pages source to "GitHub Actions".
 
 Will be live at https://ShreyasK06.github.io/personal-health-coach/ once Pages is enabled and the workflow has run (add `?demo=1` for synthetic data).
 
