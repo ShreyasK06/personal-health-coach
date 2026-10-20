@@ -9,6 +9,7 @@
 // sheet via onOpenDetail. The Move/Exercise/Stand activity-rings block has
 // been removed from this screen entirely -- it lives on the Activity tab,
 // and was empty/useless before a workout happened.
+import { useState } from 'react'
 import { Activity as ActivityIcon, Flame, Footprints, HeartPulse, Wind } from 'lucide-react'
 import type { DayView, DetailKind } from '../lib/firebase'
 import { RecoveryRing } from '../components/RecoveryRing'
@@ -20,6 +21,7 @@ import { EmptyState } from '../components/EmptyState'
 import { StatePill } from '../components/StatePill'
 import { DateNav } from '../components/DateNav'
 import { Gauge } from '../components/Gauge'
+import { CoachSheet } from '../components/CoachSheet'
 import { readiness, intensityTarget, metricDelta, calibration } from '../lib/detail'
 import { REC_BAND_COLOR, LOAD_BAND, strainWord, greeting, longDate } from '../lib/uiHelpers'
 
@@ -43,6 +45,7 @@ export function Today({
   onSelectIndex: (i: number) => void
   onOpenDetail: (kind: DetailKind, index: number) => void
 }) {
+  const [coachOpen, setCoachOpen] = useState(false)
   const day = days[selectedIndex]
   const isLatest = selectedIndex === days.length - 1
   const rec = day.recovery
@@ -68,6 +71,7 @@ export function Today({
   ].filter(Boolean).length
 
   return (
+    <>
     <div className="animate-fade-up flex flex-col gap-6">
       <GradientHero title={isLatest ? greeting() : 'Looking back'} subtitle={longDate(day.date)}>
         <DateNav
@@ -112,6 +116,26 @@ export function Today({
             </span>
           )}
         </div>
+      </Card>
+
+      {/* Morning brief -- short coach summary; the sheet holds the full brief */}
+      <Card className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-label" style={{ color: 'var(--text-mut)' }}>
+            Morning brief
+          </span>
+          <span className="text-sm" style={{ color: 'var(--text)' }}>
+            {ready.headline}. {target ? target.note : ready.note}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={() => setCoachOpen(true)}
+          className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
+          style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+        >
+          Ask coach
+        </button>
       </Card>
 
       <div className="flex flex-col gap-3">
@@ -249,5 +273,7 @@ export function Today({
         )}
       </div>
     </div>
+    {coachOpen && <CoachSheet days={days} index={selectedIndex} onClose={() => setCoachOpen(false)} />}
+    </>
   )
 }
