@@ -29,7 +29,7 @@ Weights and constants are tunable defaults intended to be calibrated against rea
 
 ## Coach
 
-The coach (`src/coach/`) is an offline rules engine by default: no network calls, no LLM. It sits behind a small `CoachAdapter` interface. To plug in your own model, set `VITE_COACH_ENDPOINT` (see `.env.example`) to the URL of a server you run; the app will POST the coach context there and show the reply, falling back to a friendly error line on failure.
+The coach (`src/coach/`) is an offline rules engine by default: no network calls, no LLM. It sits behind a small `CoachAdapter` interface. To plug in your own model, set `VITE_COACH_ENDPOINT` (see `.env.example`) to the URL of a server you run; the app will POST the coach context and your free-text question there and show the reply. On any failure (network error, timeout, non-2xx, malformed reply) it falls back to the offline rules coach and logs a `console.warn`. The endpoint must answer the CORS preflight (allow `Content-Type: application/json`), and must be served over https on the deployed Pages site (an http endpoint is blocked as mixed content).
 
 **Never put an API key in the client.** Any `VITE_` variable is bundled into the public JS. The endpoint must be your own server, which holds any provider key itself.
 
@@ -59,7 +59,7 @@ Vitest unit tests cover the CSV and JSON parsers, the export pipeline, and each 
 
 A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the app and publishes it to GitHub Pages on pushes to `main` or `master` (and on manual dispatch). In the repo settings, set Pages source to "GitHub Actions".
 
-Live demo (available once the first deploy runs): https://ShreyasK06.github.io/personal-health-coach/ (add `?demo=1` for synthetic data).
+Will be live at https://ShreyasK06.github.io/personal-health-coach/ once Pages is enabled and the workflow has run (add `?demo=1` for synthetic data).
 
 ## Project layout
 

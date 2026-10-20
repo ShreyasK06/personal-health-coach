@@ -1,5 +1,5 @@
 // Coach overlay opened from the Today "Morning brief" card. Same overlay
-// shell as MetricDetailSheet (absolute, full-bleed, sticky header with a back
+// shell as MetricDetailSheet (fixed, full-bleed, sticky header with a back
 // button) but simpler: no DateNav. Shows the coach's brief on open, then a
 // short chat (message list + input + send). While a reply is pending, send is
 // disabled. Adapter failures never surface raw: the user sees one friendly

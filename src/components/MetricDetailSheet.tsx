@@ -42,35 +42,35 @@ export function MetricDetailSheet({
       className="animate-fade-up fixed inset-0 z-50 flex justify-center"
       style={{ background: 'var(--bg)' }}
     >
-    <div className="flex h-full w-full max-w-[460px] flex-col overflow-y-auto">
-      <header
-        className="sticky top-0 z-10 flex items-center gap-3 border-b px-5 py-4"
-        style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
-          style={{ color: 'var(--text-dim)', background: 'var(--surface)' }}
+      <div className="flex h-full w-full max-w-[460px] flex-col overflow-y-auto">
+        <header
+          className="sticky top-0 z-10 flex items-center gap-3 border-b px-5 py-4"
+          style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
         >
-          <BackIcon />
-        </button>
-        <h2 className="font-display flex-1 truncate text-lg font-bold" style={{ color: 'var(--text)' }}>
-          {title}
-        </h2>
-        <DateNav
-          date={date}
-          isLatest={isLatest}
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          onBack={onBack}
-          onForward={onForward}
-        />
-      </header>
-
-      <div className="flex flex-1 flex-col gap-5 px-5 py-6">{children}</div>
-    </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{ color: 'var(--text-dim)', background: 'var(--surface)' }}
+          >
+            <BackIcon />
+          </button>
+          <h2 className="font-display flex-1 truncate text-lg font-bold" style={{ color: 'var(--text)' }}>
+            {title}
+          </h2>
+          <DateNav
+            date={date}
+            isLatest={isLatest}
+            canGoBack={canGoBack}
+            canGoForward={canGoForward}
+            onBack={onBack}
+            onForward={onForward}
+          />
+        </header>
+  
+        <div className="flex flex-1 flex-col gap-5 px-5 py-6">{children}</div>
+      </div>
     </div>
   )
 }
