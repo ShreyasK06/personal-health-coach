@@ -115,7 +115,7 @@ export function generateDemoPayloads(days = 45, seed = 7, now: Date = new Date()
     workouts.push({
       name: 'Traditional Strength Training',
       start: stamp(day, 7, 0),
-      end: stamp(day, 7 + Math.floor((strengthMin + 0) / 60), strengthMin % 60),
+      end: stamp(day, 7 + Math.floor(strengthMin / 60), strengthMin % 60),
       duration: strengthMin,
       avgHeartRate: { qty: Math.round(122 + (hardWeek ? 8 : 0) + noise(5)) },
       maxHeartRate: { qty: Math.round(158 + (hardWeek ? 8 : 0) + noise(6)) },
