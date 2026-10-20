@@ -32,6 +32,19 @@ export function buildCoachContext(days: DayView[], i: number): CoachContext {
   }
 }
 
+/** One-line effort recommendation shared by the Today brief card and the
+ * coach so they cannot diverge. A "push hard" (Zone 4-5) target is never shown
+ * when load is caution/high-risk or readiness is Strained/Run down: the
+ * cautious readiness/load wording replaces it. */
+export function effortNote(ctx: CoachContext): string {
+  const { target, readiness: ready, load } = ctx
+  if (target == null) return ready.note
+  const loadFlag = load.band === 'high-risk' || load.band === 'caution'
+  const held = ready.headline === 'Strained' || ready.headline === 'Run down'
+  if (target.zone === 'Zone 4-5' && (loadFlag || held)) return held ? ready.note : load.message
+  return target.note
+}
+
 /** Plain numbers and labels only; safe to send to a coach server. */
 export interface WireContext {
   recoveryScore: number | null
@@ -61,7 +74,7 @@ export function toWireContext(ctx: CoachContext): WireContext {
     readiness: ctx.readiness.headline,
     intensityZone: ctx.target?.zone ?? null,
     loadBand: ctx.load.band,
-    acwr: ctx.load.acwr,
-    monotony: ctx.load.monotony,
+    acwr: ctx.load.acwr != null ? Math.round(ctx.load.acwr * 100) / 100 : null,
+    monotony: ctx.load.monotony != null ? Math.round(ctx.load.monotony * 100) / 100 : null,
   }
 }

@@ -22,7 +22,8 @@ import { StatePill } from '../components/StatePill'
 import { DateNav } from '../components/DateNav'
 import { Gauge } from '../components/Gauge'
 import { CoachSheet } from '../components/CoachSheet'
-import { readiness, intensityTarget, metricDelta, calibration } from '../lib/detail'
+import { readiness, metricDelta, calibration } from '../lib/detail'
+import { buildCoachContext, effortNote } from '../coach/adapter'
 import { REC_BAND_COLOR, LOAD_BAND, strainWord, greeting, longDate } from '../lib/uiHelpers'
 
 const STRAIN_GAUGE_SIZE = 180
@@ -54,7 +55,7 @@ export function Today({
   const sleepScore = day.sleep ? Math.round(day.sleep.score) : null
   const ready = readiness(days, selectedIndex)
   const readinessColor = READINESS_TONE_COLOR[ready.tone]
-  const target = intensityTarget(day)
+  const coachCtx = buildCoachContext(days, selectedIndex)
   const cal = calibration(days, selectedIndex)
   const a = day.activity
 
@@ -110,9 +111,9 @@ export function Today({
             <span className="font-display text-display-md" style={{ color: readinessColor }}>
               {ready.headline}
             </span>
-            {target && (
+            {coachCtx.target && (
               <span className="text-sm font-medium" style={{ color: 'var(--text-dim)' }}>
-                {target.note}
+                {effortNote(coachCtx)}
               </span>
             )}
           </div>
@@ -125,7 +126,7 @@ export function Today({
               Morning brief
             </span>
             <span className="text-sm" style={{ color: 'var(--text)' }}>
-              {ready.headline}. {target ? target.note : ready.note}
+              {ready.headline}. {effortNote(coachCtx)}
             </span>
           </div>
           <button

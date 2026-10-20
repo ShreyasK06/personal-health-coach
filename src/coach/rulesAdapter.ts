@@ -1,6 +1,7 @@
 // Deterministic, offline coach. Reuses the wording and thresholds from
 // lib/detail (readiness, intensityTarget, sleep debt) rather than re-deriving
 // them. Never diagnoses: copy is general training/sleep guidance only.
+import { effortNote } from './adapter'
 import type { CoachAdapter, CoachContext } from './adapter'
 
 const TRAIN_RE = /play|train|workout|hard|push/i
@@ -26,10 +27,13 @@ function sleepLine(ctx: CoachContext): string {
 
 function trainingAdvice(ctx: CoachContext): string {
   const t = ctx.target
+  const note = effortNote(ctx)
   const guard = ctx.load.band === 'high-risk' || ctx.load.band === 'caution' ? ` ${ctx.load.message}` : ''
   if (t == null) {
     return `Without a recovery reading, train to feel and keep the effort conversational.${guard}`
   }
+  // A cautious override already carries the load/readiness wording.
+  if (note !== t.note) return note.endsWith('.') ? note : `${note}.`
   return `Suggested intensity: ${t.note}.${guard}`
 }
 
@@ -43,7 +47,8 @@ function sleepAdvice(ctx: CoachContext): string {
 
 function briefText(ctx: CoachContext): string {
   const hrv = ctx.readiness.signals[0]?.note ?? 'No HRV reading today.'
-  const zone = ctx.target ? `Intensity: ${ctx.target.note}.` : 'No intensity target without a recovery reading; train to feel.'
+  const note = effortNote(ctx)
+  const zone = ctx.target ? `Intensity: ${note}${note.endsWith('.') ? '' : '.'}` : 'No intensity target without a recovery reading; train to feel.'
   return [
     `${ctx.readiness.headline} today. ${recoveryLine(ctx)}`,
     `HRV: ${hrv}`,

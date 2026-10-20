@@ -1,7 +1,7 @@
 // Tests for the coach: offline rules adapter and the optional HTTP adapter.
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import type { DayView } from '../lib/firebase'
-import { buildCoachContext } from './adapter'
+import { buildCoachContext, effortNote, toWireContext } from './adapter'
 import { rulesAdapter } from './rulesAdapter'
 import { createHttpAdapter } from './httpAdapter'
 import { getCoach } from './index'
@@ -63,12 +63,63 @@ describe('rulesAdapter', () => {
 
   it('sleep question gives sleep advice', async () => {
     const text = await rulesAdapter.ask(ctxFor('amber', 60), 'how is my sleep?')
-    expect(text.toLowerCase()).toContain('sleep')
+    // Sleep-branch wording only; the fallback nudge never mentions sleep debt or a steady bedtime.
+    expect(text).toMatch(/Sleep debt is low|h of sleep debt/)
+    expect(text).toContain('steady bedtime')
+    expect(text).not.toContain('You can ask me about')
   })
 
   it.each(['green', 'amber', 'red'] as const)('never diagnoses (%s)', async (band) => {
     const text = await rulesAdapter.brief(ctxFor(band, 50))
     expect(text.toLowerCase()).not.toMatch(/diagnos|disease|illness/)
+  })
+})
+
+// >= 20 days so loadGuard is not 'insufficient'; the last day carries the scenario.
+function loadCtx(acwr: number, band: 'optimal' | 'high-risk') {
+  const base = mkDay('green', 82)
+  const days = Array.from({ length: 21 }, () => base)
+  days[20] = { ...base, load: { ...base.load, acwr, band } } as DayView
+  return buildCoachContext(days, 20)
+}
+
+describe('high-load day never says push hard', () => {
+  const ctx = loadCtx(1.6, 'high-risk')
+
+  it('guard is active, not insufficient', () => {
+    expect(ctx.load.band).toBe('high-risk')
+    expect(ctx.readiness.headline).toBe('Strained')
+  })
+
+  it('brief and effortNote avoid push hard / Zone 4-5 and mention easing off', async () => {
+    const text = await rulesAdapter.brief(ctx)
+    expect(text).not.toMatch(/push hard|Zone 4-5/)
+    expect(text.toLowerCase()).toContain('easier day')
+    expect(effortNote(ctx)).not.toMatch(/push hard|Zone 4-5/)
+  })
+
+  it('"should I play hard tonight?" is not self-contradicting', async () => {
+    const text = await rulesAdapter.ask(ctx, 'should I play hard tonight?')
+    expect(text).not.toMatch(/push hard|Zone 4-5/)
+    expect(text.toLowerCase()).toContain('easier day')
+  })
+
+  it('green recovery with optimal load still says Zone 4-5', async () => {
+    const ok = loadCtx(1.1, 'optimal')
+    expect(ok.load.band).toBe('optimal')
+    expect(await rulesAdapter.brief(ok)).toContain('Zone 4-5')
+    expect(await rulesAdapter.ask(ok, 'should I play hard tonight?')).toContain('Zone 4-5')
+    expect(effortNote(ok)).toContain('push hard')
+  })
+})
+
+describe('toWireContext', () => {
+  it('rounds acwr and monotony to 2 decimals', () => {
+    const c = ctxFor('green', 82)
+    c.load = { ...c.load, band: 'optimal', acwr: 1.23456, monotony: 1.98765 }
+    const w = toWireContext(c)
+    expect(w.acwr).toBe(1.23)
+    expect(w.monotony).toBe(1.99)
   })
 })
 
@@ -85,6 +136,25 @@ describe('createHttpAdapter', () => {
     const a = createHttpAdapter('https://example.test/coach', rulesAdapter)
     expect(await a.ask(c, 'should I train?')).toBe(await rulesAdapter.ask(c, 'should I train?'))
     expect(await a.brief(c)).toBe(await rulesAdapter.brief(c))
+  })
+
+  it('warns once per failure without leaking the question or context', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('net'))))
+    const a = createHttpAdapter('https://example.test/coach', rulesAdapter)
+    expect(await a.ask(c, 'secret question')).toBe(await rulesAdapter.ask(c, 'secret question'))
+    expect(warn).toHaveBeenCalledTimes(1)
+    expect(warn.mock.calls[0][0]).toBe('[coach] endpoint failed, using offline coach:')
+    expect(JSON.stringify(warn.mock.calls)).not.toContain('secret question')
+    warn.mockRestore()
+  })
+
+  it('warns on a non-ok response', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}) })))
+    await createHttpAdapter('https://example.test/coach', rulesAdapter).ask(c, 'hi')
+    expect(warn).toHaveBeenCalledTimes(1)
+    warn.mockRestore()
   })
 
   it('falls back on timeout', async () => {

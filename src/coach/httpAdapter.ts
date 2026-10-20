@@ -1,7 +1,7 @@
 // Optional HTTP coach. POSTs { context, question } (computed numbers and
 // labels only) to a server the user runs. Any failure -- network error,
-// timeout, non-2xx, malformed body, non-string reply -- silently falls back to
-// the supplied adapter. No API key is ever read or sent from the client.
+// timeout, non-2xx, malformed body, non-string reply -- falls back to the
+// supplied adapter, logging one console.warn (reason only, never the body). No API key is ever read or sent from the client.
 import type { CoachAdapter, CoachContext } from './adapter'
 import { toWireContext } from './adapter'
 
@@ -16,11 +16,17 @@ export function createHttpAdapter(endpoint: string, fallback: CoachAdapter, time
         body: JSON.stringify({ context: toWireContext(ctx), question }),
         signal: controller.signal,
       })
-      if (!res.ok) return null
+      if (!res.ok) {
+        console.warn('[coach] endpoint failed, using offline coach:', `HTTP ${res.status}`)
+        return null
+      }
       const data: unknown = await res.json()
       const reply = (data as { reply?: unknown } | null)?.reply
-      return typeof reply === 'string' && reply.trim() !== '' ? reply : null
-    } catch {
+      if (typeof reply === 'string' && reply.trim() !== '') return reply
+      console.warn('[coach] endpoint failed, using offline coach:', 'reply missing or not a string')
+      return null
+    } catch (err) {
+      console.warn('[coach] endpoint failed, using offline coach:', err instanceof Error ? err.message : 'request failed')
       return null
     } finally {
       clearTimeout(timer)
