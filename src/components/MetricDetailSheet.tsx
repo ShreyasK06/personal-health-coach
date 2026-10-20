@@ -1,4 +1,4 @@
-// Overlay shell for the "in-depth detail" views: covers the app column with
+// Overlay shell for the "in-depth detail" views: covers the viewport (fixed, centred 460px column) with
 // the dark canvas, slides/fades in above the screen content, and gives every
 // detail view (Recovery drivers, Sleep architecture, Strain sessions, etc.) a
 // consistent sticky header with a back chevron, a title, and the existing
@@ -39,9 +39,10 @@ export function MetricDetailSheet({
 }: MetricDetailSheetProps) {
   return (
     <div
-      className="animate-fade-up absolute inset-0 z-50 flex flex-col overflow-y-auto"
+      className="animate-fade-up fixed inset-0 z-50 flex justify-center"
       style={{ background: 'var(--bg)' }}
     >
+    <div className="flex h-full w-full max-w-[460px] flex-col overflow-y-auto">
       <header
         className="sticky top-0 z-10 flex items-center gap-3 border-b px-5 py-4"
         style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
@@ -69,6 +70,7 @@ export function MetricDetailSheet({
       </header>
 
       <div className="flex flex-1 flex-col gap-5 px-5 py-6">{children}</div>
+    </div>
     </div>
   )
 }
