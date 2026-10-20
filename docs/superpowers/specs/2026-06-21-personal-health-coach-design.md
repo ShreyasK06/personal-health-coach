@@ -178,3 +178,13 @@ are **tunable defaults**, to be calibrated against real data.
 - Exact Health Auto Export payload field names (verify with first real export in Phase 1).
 - Profile inputs needed by the engines (birth year, sex, HR max, base sleep need) — small settings form.
 - Final calibration of strain/recovery constants against the owner's real data.
+
+## 14. Deviations from this spec
+
+What shipped differs from the design above in these ways:
+
+- **Firebase instead of Supabase.** Data is read from a Firebase Realtime Database rather than a Supabase table fed by an `/ingest` Edge Function.
+- **No passcode gate.** The app has no passcode; data access is whatever the database rules allow.
+- **Rules-based coach with an optional HTTP adapter** instead of calling Nemotron directly. The default coach is offline and deterministic; `VITE_COACH_ENDPOINT` can point at a server the owner runs, so no API key lives in the client.
+- **Sport Load added as designed in 6.4**, with its own tab and screen (ACWR, monotony, weekly strain, per-sport breakdown).
+- Also added: a `?demo=1` synthetic-data mode, and deployment to GitHub Pages from this repo.

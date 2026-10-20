@@ -30,3 +30,6 @@ dist-ssr
 
 # local scratch (exports, screenshots, logs)
 .superpowers/
+
+# claude-flow local state
+.claude-flow/
