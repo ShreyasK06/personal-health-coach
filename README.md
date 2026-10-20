@@ -28,7 +28,7 @@ Weights and constants are tunable defaults intended to be calibrated against rea
 
 The app reads Health Auto Export JSON (the iOS app that exports Apple Health data) through `src/lib/parseHaeJson.ts` and loads it from a Firebase Realtime Database configured in `src/lib/firebase.ts`. There are also importers for CSV and ZIP exports (`csv.ts`, `loadZip.ts`, `healthExport.ts`).
 
-**This repository contains no personal health data.** Treat health data as sensitive: restrict read access on whatever database you point the app at, and don't commit exports.
+**This repository includes health data belonging to the owner:** its git history contains a sample export under `.superpowers/` (untracked in `bc3e65d`, still present in earlier commits), and the app reads a public Firebase database. Treat health data as sensitive: restrict read access on whatever database you point the app at, and don't commit exports.
 
 ## Getting started
 
