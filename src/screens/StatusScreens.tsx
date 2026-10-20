@@ -44,6 +44,7 @@ async function dayViewsFromZip(file: File): Promise<DayView[]> {
         awakeMinutes: sleep?.awakeMinutes ?? null,
         bedTime: sleep?.bedTime ?? null,
         wakeTime: sleep?.wakeTime ?? null,
+        workouts: workoutsByDate.get(result.date) ?? [],
         // CSV import has no Apple activity metrics; always fall back to all-null.
         activity: {
           steps: null,

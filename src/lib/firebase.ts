@@ -4,6 +4,7 @@
 import { parseFirebaseExports, parseActivity } from './parseHaeJson'
 import { computeDailyResults, DEFAULT_PROFILE } from './healthExport'
 import type { DailyResult } from './healthExport'
+import type { WorkoutInput } from '../metrics/types'
 import { generateDemoPayloads } from '../demo/generateDemo'
 
 export const FIREBASE_DB_URL = 'https://health-coach-76bf2-default-rtdb.firebaseio.com'
@@ -73,6 +74,7 @@ export interface DayView extends DailyResult {
   bedTime: string | null
   wakeTime: string | null
   activity: ActivityDay
+  workouts: WorkoutInput[]
 }
 
 /** Builds per-day views from raw Health Auto Export payloads, merging the
@@ -110,6 +112,7 @@ export function buildDayViews(payloads: unknown[]): DayView[] {
       bedTime: sleep?.bedTime ?? null,
       wakeTime: sleep?.wakeTime ?? null,
       activity: activityByDate.get(result.date) ?? EMPTY_ACTIVITY_DAY,
+      workouts: workoutsByDate.get(result.date) ?? [],
     }
   })
 

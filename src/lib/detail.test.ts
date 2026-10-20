@@ -36,6 +36,7 @@ function makeDay(overrides: Partial<DayView> & { date: string }): DayView {
     awakeMinutes: overrides.awakeMinutes ?? 40,
     bedTime: overrides.bedTime ?? '2026-06-19T23:00:00-04:00',
     wakeTime: overrides.wakeTime ?? '2026-06-20T06:30:00-04:00',
+    workouts: overrides.workouts ?? [],
     activity: overrides.activity ?? {
       steps: null,
       activeEnergy: null,
