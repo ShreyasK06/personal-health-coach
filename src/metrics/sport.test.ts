@@ -54,20 +54,28 @@ describe('classifySport', () => {
 describe('sportBreakdown', () => {
   const days = [
     day([workout({ type: 'Tennis' })], [50]),
-    day([workout({ type: 'Traditional Strength Training' }), workout({ type: 'Tennis' })], [100, 50]),
+    day([workout({ type: 'Traditional Strength Training' }), workout({ type: 'Tennis' })], [120, 50]),
   ]
 
   it('shares sum to 1 and are sorted by trimp desc', () => {
     const slices = sportBreakdown(days, 1)
     expect(slices.reduce((a, s) => a + s.share, 0)).toBeCloseTo(1)
-    expect(slices.map((s) => s.sport)).toEqual(['Tennis', 'Traditional Strength Training'])
-    expect(slices[0]).toMatchObject({ sessions: 2, minutes: 120, trimp: 100 })
-    expect(slices[0].trimp).toBeGreaterThanOrEqual(slices[1].trimp)
+    // Tennis is inserted first (100 total) but strength (120) must sort ahead of it.
+    expect(slices.map((s) => s.sport)).toEqual(['Traditional Strength Training', 'Tennis'])
+    expect(slices[1]).toMatchObject({ sessions: 2, minutes: 120, trimp: 100 })
   })
 
   it('respects the window', () => {
     const slices = sportBreakdown(days, 1, 1)
     expect(slices.reduce((a, s) => a + s.sessions, 0)).toBe(2)
+  })
+
+  it('splits shares evenly when every session has zero trimp', () => {
+    const zero = [day([workout({ type: 'Tennis' }), workout({ type: 'Running' })], [0, 0])]
+    const slices = sportBreakdown(zero, 0)
+    expect(slices.map((s) => s.share)).toEqual([0.5, 0.5])
+    expect(slices.reduce((a, s) => a + s.share, 0)).toBeCloseTo(1)
+    expect(slices.some((s) => Number.isNaN(s.share))).toBe(false)
   })
 
   it('returns [] when there are no workouts', () => {
