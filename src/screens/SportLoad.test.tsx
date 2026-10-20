@@ -1,11 +1,22 @@
 import { describe, it, expect } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { SportLoad } from './SportLoad'
+import { withTag } from '../lib/sportTags'
 import { generateDemoPayloads } from '../demo/generateDemo'
 import { buildDayViews } from '../lib/firebase'
 
 const NOW = new Date(2026, 5, 20, 12, 0, 0)
 const noop = () => {}
+
+describe('withTag', () => {
+  it('sets a tag and removes the key (never stores an empty string) for Auto', () => {
+    const set = withTag({ a: 'Tennis' }, 'b', 'Cricket')
+    expect(set).toEqual({ a: 'Tennis', b: 'Cricket' })
+    const cleared = withTag(set, 'b', '')
+    expect(cleared).toEqual({ a: 'Tennis' })
+    expect('b' in cleared).toBe(false)
+  })
+})
 
 describe('SportLoad', () => {
   const days = buildDayViews(generateDemoPayloads(45, 7, NOW))
@@ -20,7 +31,10 @@ describe('SportLoad', () => {
     expect(html).toContain(`>${ratio}</span>`)
     expect(html).not.toContain(`>${Math.round(Number(ratio) * 100)}</span>`)
     expect(html).toContain('Auto (')
-    expect(html).toMatch(/Tennis|Pickleball|Cricket|Running|Walking|Evening sport|Other|Strength/)
+    // Sport names inside the "By sport" bar rows (not the <option> labels).
+    const barNames = [...html.matchAll(/min-w-0 truncate text-sm font-semibold"[^>]*>([^<]+)<\/span>/g)].map((m) => m[1])
+    expect(barNames.length).toBeGreaterThan(0)
+    expect(barNames.join(' ')).toMatch(/Tennis|Pickleball|Cricket|Running|Walking|Evening sport|Other|Strength/)
     expect(html).toContain('Tag sessions')
     expect(html).not.toMatch(/NaN|Infinity/)
   })

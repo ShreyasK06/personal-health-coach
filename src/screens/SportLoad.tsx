@@ -15,10 +15,10 @@ import { EmptyState } from '../components/EmptyState'
 import { SectionLabel } from '../components/SectionLabel'
 import { DateNav } from '../components/DateNav'
 import { classifySport, sportBreakdown, loadGuard } from '../metrics/sport'
-import { getSportTags, setSportTag } from '../lib/sportTags'
+import { getSportTags, setSportTag, withTag } from '../lib/sportTags'
 import { longDate } from '../lib/uiHelpers'
 
-const TAG_OPTIONS = ['Tennis', 'Pickleball', 'Cricket', 'Other'] as const
+const TAG_OPTIONS =['Tennis', 'Pickleball', 'Cricket', 'Other'] as const
 const GAUGE_SIZE = 240
 
 const BAND_COLOR: Record<string, string> = {
@@ -53,7 +53,7 @@ export function SportLoad({
     () =>
       days.map((d) => ({
         ...d,
-        workouts: d.workouts.map((w) => ({ ...w, sportTag: tags[w.start] ?? w.sportTag })),
+        workouts: d.workouts.map((w) => ({ ...w, sportTag: tags[w.start] || w.sportTag })),
       })),
     [days, tags],
   )
@@ -172,7 +172,7 @@ export function SportLoad({
                   value={value}
                   onChange={(e) => {
                     setSportTag(w.start, e.target.value)
-                    setTags((t) => ({ ...t, [w.start]: e.target.value }))
+                    setTags((t) => withTag(t, w.start, e.target.value))
                   }}
                   className="shrink-0 rounded-xl border px-3 py-2.5 text-sm"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}

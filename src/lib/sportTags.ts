@@ -24,3 +24,12 @@ export function setSportTag(workoutStart: string, sport: string): void {
     // storage unavailable or full; tagging is best-effort
   }
 }
+
+/** In-memory counterpart of setSportTag: returns tags with `start` set, or the
+ * key removed when value is '' (Auto), so an empty string is never overlaid. */
+export function withTag(tags: Record<string, string>, start: string, value: string): Record<string, string> {
+  const next = { ...tags }
+  if (value === '') delete next[start]
+  else next[start] = value
+  return next
+}

@@ -1,32 +1,15 @@
 import type { LoadResult, WorkoutInput } from './types'
 import type { DayView } from '../lib/firebase'
 
-// Apple workout types that keep their own name in the sport breakdown.
-const KNOWN_TYPES = new Set([
-  'Tennis',
-  'Pickleball',
-  'Cricket',
-  'Traditional Strength Training',
-  'Functional Strength Training',
-  'High Intensity Interval Training',
-  'Running',
-  'Walking',
-  'Hiking',
-  'Cycling',
-  'Swimming',
-  'Rowing',
-  'Elliptical',
-  'Yoga',
-])
-
 const EVENING_START_HOUR = 16
 const MIN_HISTORY_DAYS = 14
 
-/** Manual tag wins, then the Apple type; generic "Other" after 16:00 is
+/** Manual tag wins, then the Apple type as-is; only the parser's generic
+ * fallback ("Other" / "Workout" / empty) is bucketed, and after 16:00 it is
  * treated as an evening sport session. */
 export function classifySport(w: WorkoutInput): string {
   if (w.sportTag) return w.sportTag
-  if (KNOWN_TYPES.has(w.type)) return w.type
+  if (w.type && w.type !== 'Other' && w.type !== 'Workout') return w.type
   // Hour comes from the ISO text, not a local Date, so it is timezone-stable.
   const hour = Number(w.start.slice(11, 13))
   return hour >= EVENING_START_HOUR ? 'Evening sport' : 'Other'

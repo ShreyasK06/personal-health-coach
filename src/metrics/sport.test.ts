@@ -38,6 +38,22 @@ describe('classifySport', () => {
     expect(classifySport(workout({ type: 'Tennis' }))).toBe('Tennis')
   })
 
+  it('keeps any specific Apple type regardless of hour', () => {
+    expect(classifySport(workout({ type: 'Outdoor Run', start: '2026-06-20T18:00:00' }))).toBe('Outdoor Run')
+    expect(classifySport(workout({ type: 'Soccer', start: '2026-06-20T19:00:00' }))).toBe('Soccer')
+    expect(classifySport(workout({ type: 'Outdoor Walk', start: '2026-06-20T07:00:00' }))).toBe('Outdoor Walk')
+  })
+
+  it('buckets the generic Workout fallback and empty type like Other', () => {
+    expect(classifySport(workout({ type: 'Workout', start: '2026-06-20T07:00:00' }))).toBe('Other')
+    expect(classifySport(workout({ type: 'Workout', start: '2026-06-20T18:00:00' }))).toBe('Evening sport')
+    expect(classifySport(workout({ type: '', start: '2026-06-20T07:00:00' }))).toBe('Other')
+  })
+
+  it('sportTag wins over a specific type', () => {
+    expect(classifySport(workout({ type: 'Outdoor Run', sportTag: 'Tennis' }))).toBe('Tennis')
+  })
+
   it('labels an evening Other workout as Evening sport', () => {
     expect(classifySport(workout({ start: '2026-06-20T18:30:00' }))).toBe('Evening sport')
   })
