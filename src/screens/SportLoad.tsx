@@ -3,7 +3,7 @@
 // yet" note until 14 days exist), a per-sport TRIMP breakdown over the trailing
 // 28 days as share bars, monotony and weekly training-strain tiles, and a
 // "Tag sessions" list where each workout of the selected day gets a sport
-// <select> (Tennis / Pickleball / Cricket / Other) persisted via setSportTag.
+// <select> (Tennis / Pickleball / Cricket / Other, or Auto to clear) persisted via setSportTag.
 // Reads the days array and selected index passed by App; manual tags are
 // overlaid onto the workouts before classification so the bars update at once.
 import { useMemo, useState } from 'react'
@@ -91,8 +91,9 @@ export function SportLoad({
         ) : (
           <>
             <Gauge
-              value={guard.acwr * 100}
-              max={200}
+              value={guard.acwr}
+              max={2}
+              display={guard.acwr.toFixed(2)}
               color={bandColor}
               label={`ACWR ${guard.acwr.toFixed(2)}`}
               caption={guard.band.replace('-', ' ')}
@@ -154,7 +155,8 @@ export function SportLoad({
         <Card className="flex flex-col gap-4">
           {day.workouts.map((w) => {
             const sport = classifySport(w)
-            const value = (TAG_OPTIONS as readonly string[]).includes(sport) ? sport : ''
+            const value = w.sportTag ?? ''
+            const autoSport = classifySport({ ...w, sportTag: undefined })
             return (
               <div key={w.start} className="flex items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-col">
@@ -172,14 +174,10 @@ export function SportLoad({
                     setSportTag(w.start, e.target.value)
                     setTags((t) => ({ ...t, [w.start]: e.target.value }))
                   }}
-                  className="shrink-0 rounded-xl border px-3 py-2 text-sm"
+                  className="shrink-0 rounded-xl border px-3 py-2.5 text-sm"
                   style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--text)' }}
                 >
-                  {value === '' && (
-                    <option value="" disabled>
-                      Choose sport
-                    </option>
-                  )}
+                  <option value="">{`Auto (${autoSport})`}</option>
                   {TAG_OPTIONS.map((o) => (
                     <option key={o} value={o}>
                       {o}

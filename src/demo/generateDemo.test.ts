@@ -42,6 +42,8 @@ describe('generateDemoPayloads', () => {
     const days = buildDayViews(generateDemoPayloads(45, 7, NOW))
     const last = days[days.length - 1]
     expect(last.load.acwr).toBeGreaterThanOrEqual(LOAD_BANDS.optimalBelow)
+    expect(last.load.monotony).toBeGreaterThan(1)
+    expect(last.load.monotony).toBeLessThan(4)
     expect(last.load.band).not.toBe('optimal')
   })
 

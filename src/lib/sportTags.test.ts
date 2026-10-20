@@ -26,6 +26,14 @@ describe('sportTags', () => {
     })
   })
 
+  it('clears a tag when set to an empty string', () => {
+    vi.stubGlobal('localStorage', fakeStorage())
+    setSportTag('a', 'Cricket')
+    setSportTag('b', 'Tennis')
+    setSportTag('a', '')
+    expect(getSportTags()).toEqual({ b: 'Tennis' })
+  })
+
   it('returns {} for corrupt JSON', () => {
     vi.stubGlobal('localStorage', fakeStorage({ 'phc.sportTags': '{not json' }))
     expect(getSportTags()).toEqual({})

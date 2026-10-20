@@ -9,6 +9,7 @@ interface GaugeProps {
   color?: string
   trackColor?: string
   label?: string // caption under the number, e.g. "of 100"
+  display?: string // overrides the big number, e.g. "1.56" for a ratio
   caption?: string // small state word, e.g. "Optimal"
   size?: number
   thickness?: number
@@ -21,6 +22,7 @@ export function Gauge({
   color = 'var(--sleep)',
   trackColor = 'var(--surface-2)',
   label,
+  display,
   caption,
   size = 260,
   thickness = 16,
@@ -104,7 +106,7 @@ export function Gauge({
       </svg>
       <div className="flex flex-col items-center" style={{ marginTop: -size * 0.34 }}>
         <span className="font-display tabnum font-black leading-none" style={{ fontSize: size * 0.2, color: 'var(--text)' }}>
-          {Math.round(value)}
+          {display ?? Math.round(value)}
         </span>
         {label && <span className="mt-1 text-xs" style={{ color: 'var(--text-mut)' }}>{label}</span>}
         {caption && (

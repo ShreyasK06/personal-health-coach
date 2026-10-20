@@ -37,6 +37,9 @@ interface Point {
   [key: string]: unknown
 }
 
+// Training-intensity multiplier per day of the hard block, indexed by days-ago.
+const HARD_BLOCK_INTENSITY = [2.0, 1.2, 2.0, 0.6, 1.4, 1.8, 0.9]
+
 export function generateDemoPayloads(days = 45, seed = 7, now: Date = new Date()): unknown[] {
   const rand = mulberry32(seed)
   const noise = (amp: number) => (rand() * 2 - 1) * amp
@@ -110,7 +113,9 @@ export function generateDemoPayloads(days = 45, seed = 7, now: Date = new Date()
     })
 
     // Workouts: morning strength, plus an evening tennis/cricket session.
-    const intensity = hardWeek ? 1.7 : 1
+    // Day-to-day variation inside the hard block (one lighter day) keeps weekly
+    // monotony realistic instead of collapsing the SD with identical days.
+    const intensity = hardWeek ? HARD_BLOCK_INTENSITY[offset] : 1
     const strengthMin = Math.round((50 + noise(6)) * intensity)
     workouts.push({
       name: 'Traditional Strength Training',

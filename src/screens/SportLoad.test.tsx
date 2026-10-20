@@ -15,6 +15,11 @@ describe('SportLoad', () => {
     const html = renderToString(<SportLoad days={days} selectedIndex={last} onSelectIndex={noop} />)
     expect(html).toContain('Sport load')
     expect(html).toMatch(/ACWR \d+\.\d{2}/)
+    const ratio = /ACWR (\d+\.\d{2})/.exec(html)![1]
+    // The big gauge number is the ratio itself, not a 100x rounded value.
+    expect(html).toContain(`>${ratio}</span>`)
+    expect(html).not.toContain(`>${Math.round(Number(ratio) * 100)}</span>`)
+    expect(html).toContain('Auto (')
     expect(html).toMatch(/Tennis|Pickleball|Cricket|Running|Walking|Evening sport|Other|Strength/)
     expect(html).toContain('Tag sessions')
     expect(html).not.toMatch(/NaN|Infinity/)
