@@ -27,3 +27,6 @@ dist-ssr
 
 # Superpowers scratch dir
 .superpowers/
+
+# local scratch (exports, screenshots, logs)
+.superpowers/
