@@ -4,6 +4,9 @@ import type { DayView } from '../lib/firebase'
 import { buildCoachContext } from './adapter'
 import { rulesAdapter } from './rulesAdapter'
 import { createHttpAdapter } from './httpAdapter'
+import { getCoach } from './index'
+import { generateDemoPayloads } from '../demo/generateDemo'
+import { buildDayViews } from '../lib/firebase'
 
 function mkDay(band: 'green' | 'amber' | 'red' | null, score = 82): DayView {
   return {
@@ -25,7 +28,10 @@ function ctxFor(band: 'green' | 'amber' | 'red' | null, score?: number) {
   return buildCoachContext(days, 1)
 }
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
+})
 
 describe('rulesAdapter', () => {
   it('brief on a green day quotes Zone 4-5 and recovery', async () => {
@@ -60,8 +66,8 @@ describe('rulesAdapter', () => {
     expect(text.toLowerCase()).toContain('sleep')
   })
 
-  it('never diagnoses', async () => {
-    const text = await rulesAdapter.brief(ctxFor('red', 20))
+  it.each(['green', 'amber', 'red'] as const)('never diagnoses (%s)', async (band) => {
+    const text = await rulesAdapter.brief(ctxFor(band, 50))
     expect(text.toLowerCase()).not.toMatch(/diagnos|disease|illness/)
   })
 })
@@ -91,7 +97,9 @@ describe('createHttpAdapter', () => {
       ),
     )
     const a = createHttpAdapter('https://example.test/coach', rulesAdapter, 10)
-    expect(await a.ask(c, 'train?')).toBe(await rulesAdapter.ask(c, 'train?'))
+    const answer = await a.ask(c, 'train?')
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(answer).toBe(await rulesAdapter.ask(c, 'train?'))
   })
 
   it('returns reply on success', async () => {
@@ -113,5 +121,30 @@ describe('createHttpAdapter', () => {
     for (const bad of ['payload', 'raw', 'workouts', 'start', 'source', 'device', '2026-01-09T']) {
       expect(body).not.toContain(bad)
     }
+  })
+})
+
+describe('getCoach', () => {
+  it('returns rulesAdapter when VITE_COACH_ENDPOINT is unset', () => {
+    vi.stubEnv('VITE_COACH_ENDPOINT', '')
+    expect(getCoach()).toBe(rulesAdapter)
+  })
+
+  it('returns an http adapter when set', async () => {
+    vi.stubEnv('VITE_COACH_ENDPOINT', 'https://example.test/coach')
+    const f = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({ reply: 'remote' }) }))
+    vi.stubGlobal('fetch', f)
+    const coach = getCoach()
+    expect(coach).not.toBe(rulesAdapter)
+    expect(await coach.ask(ctxFor('green', 82), 'hi')).toBe('remote')
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('buildCoachContext history', () => {
+  const days = buildDayViews(generateDemoPayloads(45, 7, new Date('2026-03-01T12:00:00Z')))
+  it('passes historyDays = i to loadGuard', () => {
+    expect(buildCoachContext(days, 3).load.band).toBe('insufficient')
+    expect(buildCoachContext(days, 20).load.band).not.toBe('insufficient')
   })
 })

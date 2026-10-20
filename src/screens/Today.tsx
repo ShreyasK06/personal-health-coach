@@ -72,208 +72,208 @@ export function Today({
 
   return (
     <>
-    <div className="animate-fade-up flex flex-col gap-6">
-      <GradientHero title={isLatest ? greeting() : 'Looking back'} subtitle={longDate(day.date)}>
-        <DateNav
-          date={day.date}
-          isLatest={isLatest}
-          canGoBack={selectedIndex > 0}
-          canGoForward={selectedIndex < days.length - 1}
-          onBack={() => onSelectIndex(Math.max(0, selectedIndex - 1))}
-          onForward={() => onSelectIndex(Math.min(days.length - 1, selectedIndex + 1))}
-        />
-      </GradientHero>
+      <div className="animate-fade-up flex flex-col gap-6">
+        <GradientHero title={isLatest ? greeting() : 'Looking back'} subtitle={longDate(day.date)}>
+          <DateNav
+            date={day.date}
+            isLatest={isLatest}
+            canGoBack={selectedIndex > 0}
+            canGoForward={selectedIndex < days.length - 1}
+            onBack={() => onSelectIndex(Math.max(0, selectedIndex - 1))}
+            onForward={() => onSelectIndex(Math.min(days.length - 1, selectedIndex + 1))}
+          />
+        </GradientHero>
 
-      {cal.level !== 'dialed' && (
-        <Card tone="surface" className="py-3">
-          <span className="text-sm font-medium" style={{ color: 'var(--text-mut)' }}>
-            {cal.label}
-          </span>
-        </Card>
-      )}
-
-      {/* hero ring */}
-      {rec ? (
-        <div className="flex justify-center">
-          <RecoveryRing score={rec.score} band={rec.band} onClick={() => onOpenDetail('recovery', selectedIndex)} />
-        </div>
-      ) : (
-        <EmptyState message="No overnight recovery reading" />
-      )}
-
-      {/* Readiness -- the lead signal */}
-      <Card tone="hero" accent={readinessColor} onClick={() => onOpenDetail('load', selectedIndex)}>
-        <div className="flex flex-col gap-2">
-          <span className="text-label" style={{ color: 'var(--text-mut)' }}>
-            Readiness
-          </span>
-          <span className="font-display text-display-md" style={{ color: readinessColor }}>
-            {ready.headline}
-          </span>
-          {target && (
-            <span className="text-sm font-medium" style={{ color: 'var(--text-dim)' }}>
-              {target.note}
+        {cal.level !== 'dialed' && (
+          <Card tone="surface" className="py-3">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-mut)' }}>
+              {cal.label}
             </span>
-          )}
-        </div>
-      </Card>
+          </Card>
+        )}
 
-      {/* Morning brief -- short coach summary; the sheet holds the full brief */}
-      <Card className="flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-label" style={{ color: 'var(--text-mut)' }}>
-            Morning brief
-          </span>
-          <span className="text-sm" style={{ color: 'var(--text)' }}>
-            {ready.headline}. {target ? target.note : ready.note}
-          </span>
-        </div>
-        <button
-          type="button"
-          onClick={() => setCoachOpen(true)}
-          className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
-          style={{ background: 'var(--accent)', color: 'var(--bg)' }}
-        >
-          Ask coach
-        </button>
-      </Card>
-
-      <div className="flex flex-col gap-3">
-        <SectionLabel>Training load</SectionLabel>
-        <Card onClick={() => onOpenDetail('load', selectedIndex)} className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-display tabnum text-display-sm" style={{ color: 'var(--text)' }}>
-              {day.load.acwr.toFixed(2)}
-            </span>
-            <StatePill tone={LOAD_BAND[day.load.band].tone}>{LOAD_BAND[day.load.band].label}</StatePill>
+        {/* hero ring */}
+        {rec ? (
+          <div className="flex justify-center">
+            <RecoveryRing score={rec.score} band={rec.band} onClick={() => onOpenDetail('recovery', selectedIndex)} />
           </div>
-          <span className="text-xs" style={{ color: 'var(--text-mut)' }}>
-            Acute to chronic load ratio
-          </span>
-        </Card>
-      </div>
-
-      <div className="flex flex-col items-center gap-3">
-        <SectionLabel>Strain</SectionLabel>
-        <Gauge
-          value={day.strain.strain}
-          max={21}
-          color="var(--strain)"
-          label="of 21"
-          caption={strainWord(day.strain.strain)}
-          size={STRAIN_GAUGE_SIZE}
-          onClick={() => onOpenDetail('strain', selectedIndex)}
-        />
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <SectionLabel>At a glance</SectionLabel>
-        {glanceTiles < 3 ? (
-          <EmptyState message="Your stats fill in as data arrives" />
         ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3">
-              {rec && (
-                <MetricCard
-                  icon={HeartPulse}
-                  label="Recovery"
-                  value={Math.round(rec.score)}
-                  unit="of 100"
-                  accent={recColor}
-                  dayDelta={metricDelta(days, selectedIndex, (d) => d.recovery?.score ?? null)}
-                  onClick={() => onOpenDetail('recovery', selectedIndex)}
-                />
-              )}
-              <MetricCard
-                icon={ActivityIcon}
-                label="Strain"
-                value={day.strain.strain.toFixed(1)}
-                unit="of 21"
-                accent="var(--strain)"
-                dayDelta={metricDelta(days, selectedIndex, (d) => d.strain.strain)}
-                onClick={() => onOpenDetail('strain', selectedIndex)}
-              />
-              {sleepScore != null && (
-                <MetricCard
-                  icon={Wind}
-                  label="Sleep"
-                  value={sleepScore}
-                  unit="of 100"
-                  accent="var(--sleep)"
-                  dayDelta={metricDelta(days, selectedIndex, (d) => d.sleep?.score ?? null)}
-                  onClick={() => onOpenDetail('sleep', selectedIndex)}
-                />
-              )}
-              {day.hrvMs != null && (
-                <MetricCard
-                  icon={HeartPulse}
-                  label="HRV"
-                  value={Math.round(day.hrvMs)}
-                  unit="ms"
-                  accent="var(--gold)"
-                  dayDelta={metricDelta(days, selectedIndex, (d) => d.hrvMs)}
-                  onClick={() => onOpenDetail('hrv', selectedIndex)}
-                />
-              )}
-              {a.steps != null && (
-                <MetricCard
-                  icon={Footprints}
-                  label="Steps"
-                  value={Math.round(a.steps)}
-                  accent="var(--steps)"
-                  gradFrom="var(--steps-grad-from)"
-                  gradTo="var(--steps-grad-to)"
-                  dayDelta={metricDelta(days, selectedIndex, (d) => d.activity.steps)}
-                  onClick={() => onOpenDetail('steps', selectedIndex)}
-                />
-              )}
-              {a.activeEnergy != null && (
-                <MetricCard
-                  icon={Flame}
-                  label="Active cal"
-                  value={Math.round(a.activeEnergy)}
-                  unit="kcal"
-                  accent="var(--move)"
-                  gradFrom="var(--move-grad-from)"
-                  gradTo="var(--move-grad-to)"
-                  dayDelta={metricDelta(days, selectedIndex, (d) => d.activity.activeEnergy)}
-                  onClick={() => onOpenDetail('activeEnergy', selectedIndex)}
-                />
-              )}
-            </div>
+          <EmptyState message="No overnight recovery reading" />
+        )}
 
-            {(day.restingHr != null || day.respiratoryRate != null) && (
+        {/* Readiness -- the lead signal */}
+        <Card tone="hero" accent={readinessColor} onClick={() => onOpenDetail('load', selectedIndex)}>
+          <div className="flex flex-col gap-2">
+            <span className="text-label" style={{ color: 'var(--text-mut)' }}>
+              Readiness
+            </span>
+            <span className="font-display text-display-md" style={{ color: readinessColor }}>
+              {ready.headline}
+            </span>
+            {target && (
+              <span className="text-sm font-medium" style={{ color: 'var(--text-dim)' }}>
+                {target.note}
+              </span>
+            )}
+          </div>
+        </Card>
+
+        {/* Morning brief -- short coach summary; the sheet holds the full brief */}
+        <Card className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-col gap-1">
+            <span className="text-label" style={{ color: 'var(--text-mut)' }}>
+              Morning brief
+            </span>
+            <span className="text-sm" style={{ color: 'var(--text)' }}>
+              {ready.headline}. {target ? target.note : ready.note}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCoachOpen(true)}
+            className="shrink-0 rounded-full px-4 py-2 text-sm font-semibold"
+            style={{ background: 'var(--accent)', color: 'var(--bg)' }}
+          >
+            Ask coach
+          </button>
+        </Card>
+
+        <div className="flex flex-col gap-3">
+          <SectionLabel>Training load</SectionLabel>
+          <Card onClick={() => onOpenDetail('load', selectedIndex)} className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-display tabnum text-display-sm" style={{ color: 'var(--text)' }}>
+                {day.load.acwr.toFixed(2)}
+              </span>
+              <StatePill tone={LOAD_BAND[day.load.band].tone}>{LOAD_BAND[day.load.band].label}</StatePill>
+            </div>
+            <span className="text-xs" style={{ color: 'var(--text-mut)' }}>
+              Acute to chronic load ratio
+            </span>
+          </Card>
+        </div>
+
+        <div className="flex flex-col items-center gap-3">
+          <SectionLabel>Strain</SectionLabel>
+          <Gauge
+            value={day.strain.strain}
+            max={21}
+            color="var(--strain)"
+            label="of 21"
+            caption={strainWord(day.strain.strain)}
+            size={STRAIN_GAUGE_SIZE}
+            onClick={() => onOpenDetail('strain', selectedIndex)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <SectionLabel>At a glance</SectionLabel>
+          {glanceTiles < 3 ? (
+            <EmptyState message="Your stats fill in as data arrives" />
+          ) : (
+            <>
               <div className="grid grid-cols-2 gap-3">
-                {day.restingHr != null && (
+                {rec && (
                   <MetricCard
                     icon={HeartPulse}
-                    label="Resting HR"
-                    value={Math.round(day.restingHr)}
-                    unit="bpm"
-                    accent="var(--rec-mid)"
-                    invert
-                    dayDelta={metricDelta(days, selectedIndex, (d) => d.restingHr)}
-                    onClick={() => onOpenDetail('rhr', selectedIndex)}
+                    label="Recovery"
+                    value={Math.round(rec.score)}
+                    unit="of 100"
+                    accent={recColor}
+                    dayDelta={metricDelta(days, selectedIndex, (d) => d.recovery?.score ?? null)}
+                    onClick={() => onOpenDetail('recovery', selectedIndex)}
                   />
                 )}
-                {day.respiratoryRate != null && (
+                <MetricCard
+                  icon={ActivityIcon}
+                  label="Strain"
+                  value={day.strain.strain.toFixed(1)}
+                  unit="of 21"
+                  accent="var(--strain)"
+                  dayDelta={metricDelta(days, selectedIndex, (d) => d.strain.strain)}
+                  onClick={() => onOpenDetail('strain', selectedIndex)}
+                />
+                {sleepScore != null && (
                   <MetricCard
                     icon={Wind}
-                    label="Respiratory"
-                    value={day.respiratoryRate.toFixed(1)}
-                    unit="br/min"
-                    accent="var(--text-mut)"
-                    dayDelta={metricDelta(days, selectedIndex, (d) => d.respiratoryRate)}
-                    onClick={() => onOpenDetail('respiratory', selectedIndex)}
+                    label="Sleep"
+                    value={sleepScore}
+                    unit="of 100"
+                    accent="var(--sleep)"
+                    dayDelta={metricDelta(days, selectedIndex, (d) => d.sleep?.score ?? null)}
+                    onClick={() => onOpenDetail('sleep', selectedIndex)}
+                  />
+                )}
+                {day.hrvMs != null && (
+                  <MetricCard
+                    icon={HeartPulse}
+                    label="HRV"
+                    value={Math.round(day.hrvMs)}
+                    unit="ms"
+                    accent="var(--gold)"
+                    dayDelta={metricDelta(days, selectedIndex, (d) => d.hrvMs)}
+                    onClick={() => onOpenDetail('hrv', selectedIndex)}
+                  />
+                )}
+                {a.steps != null && (
+                  <MetricCard
+                    icon={Footprints}
+                    label="Steps"
+                    value={Math.round(a.steps)}
+                    accent="var(--steps)"
+                    gradFrom="var(--steps-grad-from)"
+                    gradTo="var(--steps-grad-to)"
+                    dayDelta={metricDelta(days, selectedIndex, (d) => d.activity.steps)}
+                    onClick={() => onOpenDetail('steps', selectedIndex)}
+                  />
+                )}
+                {a.activeEnergy != null && (
+                  <MetricCard
+                    icon={Flame}
+                    label="Active cal"
+                    value={Math.round(a.activeEnergy)}
+                    unit="kcal"
+                    accent="var(--move)"
+                    gradFrom="var(--move-grad-from)"
+                    gradTo="var(--move-grad-to)"
+                    dayDelta={metricDelta(days, selectedIndex, (d) => d.activity.activeEnergy)}
+                    onClick={() => onOpenDetail('activeEnergy', selectedIndex)}
                   />
                 )}
               </div>
-            )}
-          </>
-        )}
+
+              {(day.restingHr != null || day.respiratoryRate != null) && (
+                <div className="grid grid-cols-2 gap-3">
+                  {day.restingHr != null && (
+                    <MetricCard
+                      icon={HeartPulse}
+                      label="Resting HR"
+                      value={Math.round(day.restingHr)}
+                      unit="bpm"
+                      accent="var(--rec-mid)"
+                      invert
+                      dayDelta={metricDelta(days, selectedIndex, (d) => d.restingHr)}
+                      onClick={() => onOpenDetail('rhr', selectedIndex)}
+                    />
+                  )}
+                  {day.respiratoryRate != null && (
+                    <MetricCard
+                      icon={Wind}
+                      label="Respiratory"
+                      value={day.respiratoryRate.toFixed(1)}
+                      unit="br/min"
+                      accent="var(--text-mut)"
+                      dayDelta={metricDelta(days, selectedIndex, (d) => d.respiratoryRate)}
+                      onClick={() => onOpenDetail('respiratory', selectedIndex)}
+                    />
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-    {coachOpen && <CoachSheet days={days} index={selectedIndex} onClose={() => setCoachOpen(false)} />}
+      {coachOpen && <CoachSheet days={days} index={selectedIndex} onClose={() => setCoachOpen(false)} />}
     </>
   )
 }

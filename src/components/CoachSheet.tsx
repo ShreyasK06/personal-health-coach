@@ -45,18 +45,41 @@ export function CoachSheet({
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
   const [pending, setPending] = useState(false)
-  const alive = useRef(true)
-
+  const mounted = useRef(true)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const onCloseRef = useRef(onClose)
   useEffect(() => {
-    alive.current = true
+    onCloseRef.current = onClose
+  })
+
+  // Brief: a per-run flag so a superseded request can never set stale text.
+  useEffect(() => {
+    let live = true
     adapter
       .brief(ctx)
-      .then((t) => alive.current && setBrief(t))
-      .catch(() => alive.current && setBrief(ERROR_TEXT))
+      .then((t) => live && setBrief(t))
+      .catch(() => live && setBrief(ERROR_TEXT))
     return () => {
-      alive.current = false
+      live = false
     }
   }, [adapter, ctx])
+
+  // Dialog behavior: focus the input on open, restore focus on close, close on
+  // Escape. Also tracks mount state so late chat replies are dropped.
+  useEffect(() => {
+    mounted.current = true
+    const previous = document.activeElement as HTMLElement | null
+    inputRef.current?.focus()
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseRef.current()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => {
+      mounted.current = false
+      document.removeEventListener('keydown', onKey)
+      previous?.focus?.()
+    }
+  }, [])
 
   async function send(e: FormEvent) {
     e.preventDefault()
@@ -71,18 +94,20 @@ export function CoachSheet({
     } catch {
       reply = ERROR_TEXT
     }
-    if (!alive.current) return
+    if (!mounted.current) return
     setMessages((m) => [...m, { role: 'coach', text: reply }])
     setPending(false)
   }
 
   return (
     <div
-      className="animate-fade-up absolute inset-0 z-50 flex flex-col overflow-y-auto"
+      className="animate-fade-up fixed inset-0 z-50 flex justify-center"
       style={{ background: 'var(--bg)' }}
       role="dialog"
+      aria-modal="true"
       aria-label="Coach"
     >
+    <div className="flex h-full w-full max-w-[460px] flex-col overflow-y-auto">
       <header
         className="sticky top-0 z-10 flex items-center gap-3 border-b px-5 py-4"
         style={{ borderColor: 'var(--border)', background: 'var(--bg)' }}
@@ -143,6 +168,7 @@ export function CoachSheet({
           </label>
           <input
             id="coach-question"
+            ref={inputRef}
             type="text"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
@@ -164,6 +190,7 @@ export function CoachSheet({
           General guidance, not medical advice
         </p>
       </div>
+    </div>
     </div>
   )
 }

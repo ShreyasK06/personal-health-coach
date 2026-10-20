@@ -16,12 +16,17 @@ const day = {
   workouts: [],
 } as unknown as DayView
 
+// Escape-to-close and focus move/restore need a DOM; not testable without
+// jsdom (intentionally not added), so only markup is asserted here.
 describe('CoachSheet', () => {
   it('renders brief region, labelled input, send button and disclaimer', () => {
     const html = renderToString(<CoachSheet days={[day, day]} index={1} onClose={() => {}} coach={rulesAdapter} />)
     expect(html).toContain('aria-label="Morning brief"')
     expect(html).toContain('for="coach-question"')
     expect(html).toContain('aria-label="Send question"')
+    expect(html).toContain('role="dialog"')
+    expect(html).toContain('aria-modal="true"')
+    expect(html).toContain('aria-label="Coach"')
     expect(html).toContain('General guidance, not medical advice')
   })
 })
