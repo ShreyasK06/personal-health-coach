@@ -28,6 +28,18 @@ describe('loadHealthData', () => {
   })
 })
 
+describe('isDemoData', () => {
+  it.each([
+    ['?demo=1', true],
+    ['?demo=0', false],
+    ['?demo', false],
+    ['?demo=true', false],
+  ])('%s -> %s', (search, expected) => {
+    vi.stubGlobal('location', { search })
+    expect(isDemoData()).toBe(expected)
+  })
+})
+
 describe('buildDayViews workouts', () => {
   it('exposes a workouts array on every day, with at least one two-workout day', () => {
     const now = new Date(2026, 5, 20, 12, 0, 0)

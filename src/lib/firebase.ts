@@ -119,10 +119,10 @@ export function buildDayViews(payloads: unknown[]): DayView[] {
   return dayViews.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-/** True when the page was opened with `?demo` (synthetic data, no network). */
+/** True only for `?demo=1` (synthetic data, no network). */
 export function isDemoData(): boolean {
   if (typeof location === 'undefined') return false
-  return new URLSearchParams(location.search).has('demo')
+  return new URLSearchParams(location.search).get('demo') === '1'
 }
 
 /** Returns synthetic demo days when `?demo=1`; otherwise fetches all Health
