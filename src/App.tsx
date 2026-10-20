@@ -12,6 +12,7 @@ import { AppShell } from './components/AppShell'
 import type { TabId } from './components/BottomNav'
 import { Today } from './screens/Today'
 import { Activity } from './screens/Activity'
+import { SportLoad } from './screens/SportLoad'
 import { Trends } from './screens/Trends'
 import { Sleep } from './screens/Sleep'
 import { LoadingScreen, ErrorScreen, EmptyScreen } from './screens/StatusScreens'
@@ -134,6 +135,9 @@ export default function App() {
           onSelectIndex={setSelectedIndex}
           onOpenDetail={openDetail}
         />
+      )}
+      {tab === 'load' && (
+        <SportLoad days={days} selectedIndex={activeIndex} onSelectIndex={setSelectedIndex} />
       )}
       {tab === 'trends' && <Trends days={days} onOpenDetail={openDetail} />}
       {tab === 'sleep' && (

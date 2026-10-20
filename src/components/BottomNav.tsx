@@ -1,8 +1,8 @@
-// Bottom tab bar fixed within the centered column: Today / Activity / Trends /
-// Sleep with a central circular teal "+" button that refreshes data from
+// Bottom tab bar fixed within the centered column: Today / Activity (left) and
+// Load / Trends / Sleep (right) around a central circular teal "+" button that refreshes data from
 // Firebase. Active tab is teal (--accent), others muted. Rendered by AppShell;
 // onTab switches screens and onRefresh re-runs loadHealthData.
-export type TabId = 'today' | 'activity' | 'trends' | 'sleep'
+export type TabId = 'today' | 'activity' | 'load' | 'trends' | 'sleep'
 
 function TodayIcon({ active }: { active: boolean }) {
   const c = active ? 'var(--accent)' : 'var(--text-mut)'
@@ -19,6 +19,15 @@ function ActivityIcon({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
       <path d="M3 12h4l2.5 7L13.5 5l2.5 7h5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function LoadIcon({ active }: { active: boolean }) {
+  const c = active ? 'var(--accent)' : 'var(--text-mut)'
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.8">
+      <path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -45,6 +54,7 @@ function SleepIcon({ active }: { active: boolean }) {
 const TABS: { id: TabId; label: string; Icon: (p: { active: boolean }) => React.ReactElement }[] = [
   { id: 'today', label: 'Today', Icon: TodayIcon },
   { id: 'activity', label: 'Activity', Icon: ActivityIcon },
+  { id: 'load', label: 'Load', Icon: LoadIcon },
   { id: 'trends', label: 'Trends', Icon: TrendsIcon },
   { id: 'sleep', label: 'Sleep', Icon: SleepIcon },
 ]
@@ -60,19 +70,19 @@ export function BottomNav({
   onRefresh: () => void
   refreshing?: boolean
 }) {
-  const left = TABS.slice(0, 1)
-  const right = TABS.slice(1)
+  const left = TABS.slice(0, 2)
+  const right = TABS.slice(2)
 
   return (
     <nav
-      className="pointer-events-auto sticky bottom-0 z-20 mt-auto flex items-center justify-between gap-2 border-t px-4 pb-5 pt-3"
+      className="pointer-events-auto sticky bottom-0 z-20 mt-auto flex items-center justify-between gap-1 border-t px-3 pb-5 pt-3"
       style={{
         borderColor: 'var(--border)',
         background: 'color-mix(in srgb, var(--bg) 88%, transparent)',
         backdropFilter: 'blur(12px)',
       }}
     >
-      <div className="flex flex-1 justify-around">
+      <div className="flex min-w-0 flex-1 justify-around">
         {left.map(({ id, label, Icon }) => (
           <TabButton key={id} id={id} label={label} Icon={Icon} active={active === id} onClick={() => onTab(id)} />
         ))}
@@ -106,7 +116,7 @@ export function BottomNav({
         </svg>
       </button>
 
-      <div className="flex flex-1 justify-around">
+      <div className="flex min-w-0 flex-1 justify-around">
         {right.map(({ id, label, Icon }) => (
           <TabButton key={id} id={id} label={label} Icon={Icon} active={active === id} onClick={() => onTab(id)} />
         ))}
@@ -131,7 +141,7 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-1 px-3 py-1"
+      className="flex flex-col items-center gap-1 px-1.5 py-1"
       style={{ color: active ? 'var(--accent)' : 'var(--text-mut)' }}
     >
       <Icon active={active} />
