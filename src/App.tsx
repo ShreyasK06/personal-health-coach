@@ -6,7 +6,7 @@
 // owns `selectedIndex`, the day Today/Sleep currently display (defaults to the
 // latest day, steppable via DateNav).
 import { useCallback, useEffect, useState } from 'react'
-import { loadHealthData } from './lib/firebase'
+import { loadHealthData, isDemoData } from './lib/firebase'
 import type { DayView, DetailKind } from './lib/firebase'
 import { AppShell } from './components/AppShell'
 import type { TabId } from './components/BottomNav'
@@ -109,6 +109,16 @@ export default function App() {
 
   return (
     <AppShell active={tab} onTab={setTab} onRefresh={handleRefresh} refreshing={refreshing}>
+      {isDemoData() && (
+        <div className="mb-3 flex justify-end">
+          <span
+            className="rounded-full border px-2.5 py-0.5 text-[11px] font-medium"
+            style={{ borderColor: 'var(--border)', background: 'var(--surface-2)', color: 'var(--accent)' }}
+          >
+            Demo data
+          </span>
+        </div>
+      )}
       {tab === 'today' && (
         <Today
           days={days}

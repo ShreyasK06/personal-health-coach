@@ -4,6 +4,7 @@
 import { parseFirebaseExports, parseActivity } from './parseHaeJson'
 import { computeDailyResults, DEFAULT_PROFILE } from './healthExport'
 import type { DailyResult } from './healthExport'
+import { generateDemoPayloads } from '../demo/generateDemo'
 
 export const FIREBASE_DB_URL = 'https://health-coach-76bf2-default-rtdb.firebaseio.com'
 
@@ -115,9 +116,16 @@ export function buildDayViews(payloads: unknown[]): DayView[] {
   return dayViews.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-/** Fetches all Health Auto Export payloads from the Realtime Database and
- * returns them as sorted per-day views. */
+/** True when the page was opened with `?demo` (synthetic data, no network). */
+export function isDemoData(): boolean {
+  if (typeof location === 'undefined') return false
+  return new URLSearchParams(location.search).has('demo')
+}
+
+/** Returns synthetic demo days when `?demo=1`; otherwise fetches all Health
+ * Auto Export payloads from the Realtime Database as sorted per-day views. */
 export async function loadHealthData(): Promise<DayView[]> {
+  if (isDemoData()) return buildDayViews(generateDemoPayloads())
   const res = await fetch(`${FIREBASE_DB_URL}/health_raw.json`)
   if (!res.ok) throw new Error(`Failed to load health data: ${res.status} ${res.statusText}`)
   const obj = await res.json()
