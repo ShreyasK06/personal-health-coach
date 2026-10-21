@@ -4,6 +4,10 @@ A single-user, Whoop-style dashboard built on Apple Watch / Apple Health data. I
 
 Built with React 19, TypeScript, Vite, and Tailwind CSS. The scoring logic is written as pure, unit-tested functions, separate from the UI.
 
+![Today, training load and sleep screens (demo data)](docs/images/overview.png)
+
+*Screens shown with the built-in synthetic demo data (`?demo=1`): recovery ring and readiness, strain gauge, acute-vs-chronic training load by sport, and sleep stages.*
+
 ## What it shows
 
 - **Today:** recovery ring, a readiness banner (the lead signal), training load, strain gauge, and an at-a-glance grid (recovery, strain, sleep, HRV, steps, active calories, resting HR, respiratory rate) with day-over-day deltas.
@@ -32,6 +36,23 @@ Weights and constants are tunable defaults intended to be calibrated against rea
 The coach (`src/coach/`) is an offline rules engine by default: no network calls, no LLM. It sits behind a small `CoachAdapter` interface. To plug in your own model, set `VITE_COACH_ENDPOINT` (see `.env.example`) to the URL of a server you run; the app will POST the coach context and your free-text question there and show the reply. On any failure (network error, timeout, non-2xx, malformed reply) it falls back to the offline rules coach and logs a `console.warn`. The endpoint must answer the CORS preflight (allow `Content-Type: application/json`), and must be served over https on the deployed Pages site (an http endpoint is blocked as mixed content).
 
 **Never put an API key in the client.** Any `VITE_` variable is bundled into the public JS. The endpoint must be your own server, which holds any provider key itself.
+
+### LLM coach server (optional)
+
+`server/coach-server.mjs` is a dependency-free Node server (Node 20.6+) that implements that endpoint with an NVIDIA NIM chat model (default `deepseek-ai/deepseek-v4.1-flash`).
+
+```bash
+cp server/.env.example server/.env      # add NVIDIA_API_KEY (git-ignored)
+npm run coach:server                    # http://localhost:8787
+echo "VITE_COACH_ENDPOINT=http://localhost:8787/coach" > .env.local
+npm run dev
+```
+
+- The browser sends only the already-computed numbers and labels (recovery, HRV, sleep debt, load ratio and so on), never raw workouts or timestamps.
+- The server holds the key, checks the request origin against an allowlist, caps body and question size, rate-limits per IP, and logs failure reasons only (never bodies or keys).
+- The system prompt tells the model to use only the supplied numbers, stay brief, avoid hard training when load or readiness is flagged, and defer to a professional for symptoms.
+- If the model is slow or unavailable, the app falls back to the offline rules coach after the client timeout.
+- The deployed GitHub Pages site cannot reach a `localhost` server. To use the LLM coach there, host `coach-server.mjs` somewhere with https and set `ALLOWED_ORIGINS` to your Pages origin.
 
 ## Data
 
